@@ -1,0 +1,7 @@
+// Copy this file to config.js and fill in your values before running the app.
+// Do NOT commit config.js (it is in .gitignore).
+window.CONFIG = {
+  CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+  API_KEY: 'YOUR_GOOGLE_API_KEY',
+  SPREADSHEET_ID: 'YOUR_GOOGLE_SPREADSHEET_ID'
+};
