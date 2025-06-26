@@ -1,6 +1,6 @@
 // Constants for Google API discovery and scopes
 const DISCOVERY_DOCS = [
-  'https://sheets.googleapis.com/$discovery/rest?version=v4'
+  'https://sheets.googleapis.com/$discovery/rest?version=v4',
 ];
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
@@ -18,7 +18,7 @@ function gapiLoaded() {
 async function initializeGapiClient() {
   await gapi.client.init({
     apiKey: CONFIG.API_KEY,
-    discoveryDocs: DISCOVERY_DOCS
+    discoveryDocs: DISCOVERY_DOCS,
   });
   gapiInited = true;
 }
@@ -28,7 +28,7 @@ function gisLoaded() {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CONFIG.CLIENT_ID,
     scope: SCOPES,
-    callback: '' // defined at request time
+    callback: '', // defined at request time
   });
   gisInited = true;
 }
@@ -46,7 +46,7 @@ function handleAuthError(err) {
   console.error('Auth failed', err);
   if (err && err.error === 'popup_closed_by_user') {
     alert(
-      'The sign-in popup was closed or blocked. Please allow pop-ups for this site and try again.'
+      'The sign-in popup was closed or blocked. Please allow pop-ups for this site and try again.',
     );
   }
 }
@@ -61,7 +61,8 @@ addBtn.addEventListener('click', () => {
 });
 
 saveBtn.addEventListener('click', () => {
-  if (!gapiInited || !gisInited) return console.error('GAPI or GIS not initialized');
+  if (!gapiInited || !gisInited)
+    return console.error('GAPI or GIS not initialized');
   tokenClient.callback = (resp) => {
     if (resp.error !== undefined) return handleAuthError(resp);
     saveToSheet();
@@ -74,7 +75,8 @@ saveBtn.addEventListener('click', () => {
 });
 
 loadBtn.addEventListener('click', () => {
-  if (!gapiInited || !gisInited) return console.error('GAPI or GIS not initialized');
+  if (!gapiInited || !gisInited)
+    return console.error('GAPI or GIS not initialized');
   tokenClient.callback = (resp) => {
     if (resp.error !== undefined) return handleAuthError(resp);
     loadFromSheet();
@@ -89,22 +91,22 @@ loadBtn.addEventListener('click', () => {
 // Test Share Target functionality
 testShareBtn.addEventListener('click', async () => {
   console.log('Testing share target...');
-  
+
   // Create a form with share data
   const formData = new FormData();
   formData.append('title', 'Test Share Title');
   formData.append('text', 'This is a test share from the app');
   formData.append('url', 'https://example.com/test');
-  
+
   try {
     // Send POST request to our own domain (should be intercepted by SW)
     const response = await fetch('/', {
       method: 'POST',
-      body: formData
+      body: formData,
     });
-    
+
     console.log('Test share response:', response);
-    
+
     if (response.redirected) {
       console.log('Redirected to:', response.url);
       window.location.href = response.url;
@@ -119,7 +121,7 @@ testShareBtn.addEventListener('click', async () => {
 // Clear Service Worker completely
 clearSwBtn.addEventListener('click', async () => {
   console.log('Clearing service worker...');
-  
+
   try {
     // Unregister all service workers
     const registrations = await navigator.serviceWorker.getRegistrations();
@@ -127,14 +129,14 @@ clearSwBtn.addEventListener('click', async () => {
       console.log('Unregistering SW:', registration.scope);
       await registration.unregister();
     }
-    
+
     // Clear all caches
     const cacheNames = await caches.keys();
     for (const cacheName of cacheNames) {
       console.log('Deleting cache:', cacheName);
       await caches.delete(cacheName);
     }
-    
+
     alert('Service worker and caches cleared! Reloading page...');
     window.location.reload();
   } catch (error) {
@@ -144,40 +146,42 @@ clearSwBtn.addEventListener('click', async () => {
 });
 
 function saveToSheet() {
-  const items = Array.from(urlList.querySelectorAll('li')).map(li => li.textContent);
-  const values = items.map(item => [item, '', '']);
+  const items = Array.from(urlList.querySelectorAll('li')).map(
+    (li) => li.textContent,
+  );
+  const values = items.map((item) => [item, '', '']);
   const params = {
     spreadsheetId: window.CONFIG.SPREADSHEET_ID,
     range: `Sheet1!A2:C${values.length + 1}`,
-    valueInputOption: 'RAW'
+    valueInputOption: 'RAW',
   };
   const body = { values };
   gapi.client.sheets.spreadsheets.values
     .update(params, body)
-    .then(response => {
+    .then((response) => {
       console.log('Saved', response);
       // alert('Saved to Google Sheets.');
     })
-    .catch(error => console.error('Error saving data', error));
+    .catch((error) => console.error('Error saving data', error));
 }
 
 function loadFromSheet() {
   const params = {
     spreadsheetId: window.CONFIG.SPREADSHEET_ID,
-    range: 'Sheet1!A2:A'
+    range: 'Sheet1!A2:A',
   };
   gapi.client.sheets.spreadsheets.values
     .get(params)
-    .then(response => {
+    .then((response) => {
       const rows = response.result.values || [];
       urlList.innerHTML = '';
-      rows.forEach(row => {
+      rows.forEach((row) => {
         const li = document.createElement('li');
         li.textContent = row[0];
         urlList.appendChild(li);
       });
     })
-    .catch(error => console.error('Error loading data', error));
+    .catch((error) => console.error('Error loading data', error));
 }
 
 // Handle Web Share Target POST redirect
@@ -227,7 +231,7 @@ function handleShareTarget() {
     } else {
       console.log('No URL found in shared data');
     }
-  } 
+  }
 }
 
 // Call the function when DOM is loaded
@@ -240,14 +244,15 @@ if (document.readyState === 'loading') {
 // Service Worker Debug Info
 function checkServiceWorkerStatus() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then(registration => {
-      console.log('Service Worker is ready:', registration);
-      console.log('Service Worker scope:', registration.scope);
-      console.log('Service Worker active:', registration.active);
-      
-      // Add status to page for debugging
-      const statusDiv = document.createElement('div');
-      statusDiv.style.cssText = `
+    navigator.serviceWorker.ready
+      .then((registration) => {
+        console.log('Service Worker is ready:', registration);
+        console.log('Service Worker scope:', registration.scope);
+        console.log('Service Worker active:', registration.active);
+
+        // Add status to page for debugging
+        const statusDiv = document.createElement('div');
+        statusDiv.style.cssText = `
         position: fixed; 
         top: 10px; 
         right: 10px; 
@@ -258,22 +263,23 @@ function checkServiceWorkerStatus() {
         max-width: 300px;
         z-index: 1000;
       `;
-      statusDiv.innerHTML = `
+        statusDiv.innerHTML = `
         <strong>SW Status:</strong><br>
         Scope: ${registration.scope}<br>
         Active: ${!!registration.active}<br>
         State: ${registration.active?.state || 'none'}<br>
         <button onclick="this.parentElement.remove()">Close</button>
       `;
-      document.body.appendChild(statusDiv);
-    }).catch(err => {
-      console.error('Service Worker not ready:', err);
-    });
+        document.body.appendChild(statusDiv);
+      })
+      .catch((err) => {
+        console.error('Service Worker not ready:', err);
+      });
 
     // Listen for service worker updates
-    navigator.serviceWorker.addEventListener('message', event => {
+    navigator.serviceWorker.addEventListener('message', (event) => {
       console.log('Message from SW:', event.data);
-      
+
       // Show alerts for mobile debugging
       if (event.data.type === 'SHARE_TARGET_DETECTED') {
         alert(event.data.message);
@@ -294,7 +300,7 @@ async function testCachedFiles() {
     './style.css',
     './manifest.json',
     './icons/icon-192.png',
-    './icons/icon-512.png'
+    './icons/icon-512.png',
   ];
 
   console.log('Testing file accessibility...');
@@ -339,14 +345,14 @@ clearSwBtn.addEventListener('click', async () => {
     try {
       // Unregister all service workers
       const registrations = await navigator.serviceWorker.getRegistrations();
-      for (let registration of registrations) {
+      for (const registration of registrations) {
         await registration.unregister();
       }
-      
+
       // Clear all caches
       const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map(name => caches.delete(name)));
-      
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
+
       alert('Service Worker and cache cleared! Page will reload.');
       window.location.reload();
     } catch (error) {

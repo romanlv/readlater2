@@ -5,10 +5,14 @@
   "scripts": {
     "tunnel": "cloudflared tunnel run --token eyJhIjoiYTljNjFkMzAyYWIwNTE1OWQ4OTUzOTRkYjgwYzRlYjYiLCJ0IjoiNWI2YjZkMTMtODdmOS00Mzg4LTgyM2MtYjI1NGFhMDQzZmEzIiwicyI6Ik16SmtNall3T1RjdFpqRmhOQzAwWVRZNExUaGxOekV0T1RFNU5qVTFaV1U1WVdVeiJ9",
     "serve": "npx serve -p 3030 .",
+    "lint:fix": "npx @biomejs/biome check --write .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.5"
+  }
 }
