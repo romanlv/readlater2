@@ -1,0 +1,1 @@
+console.log('ReadLater content script loaded');
