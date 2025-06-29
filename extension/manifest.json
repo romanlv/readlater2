@@ -13,7 +13,8 @@
   
   "host_permissions": [
     "<all_urls>",
-    "https://sheets.googleapis.com/*"
+    "https://sheets.googleapis.com/*",
+    "https://www.googleapis.com/*"
   ],
   
   "background": {
@@ -48,6 +49,9 @@
   
   "oauth2": {
     "client_id": "936857689188-f4jepc4pamt7q7cg97ommee95cn2urpl.apps.googleusercontent.com",
-    "scopes": ["https://www.googleapis.com/auth/spreadsheets"]
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive.metadata.readonly"
+    ]
   }
 }

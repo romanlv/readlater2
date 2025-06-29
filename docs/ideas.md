@@ -46,3 +46,7 @@ ability add multiple lists, so different accounts can contribute
 ## data structure 
 
 when saving to spreadsheet, define columns and mapping to the data 
+
+## extension 
+
+- when visiting a page, check if it's already in the spreadsheet, allow accessing notes and tags 

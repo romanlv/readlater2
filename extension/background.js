@@ -49,11 +49,15 @@ function extractPageData() {
 async function saveToGoogleSheets(article) {
   console.log('Getting auth token...');
   const token = await getAuthToken();
-  console.log('Got auth token, making API request...');
+  console.log('Got auth token, getting/creating spreadsheet...');
+  
+  // Get or create the spreadsheet in ReadLater folder
+  const spreadsheetId = await getOrCreateReadLaterSpreadsheet(token);
+  console.log('Using spreadsheet ID:', spreadsheetId);
   
   // First, get the current data to find the next empty row
   const getResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/Sheet1!A:A`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A:A`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -90,7 +94,7 @@ async function saveToGoogleSheets(article) {
   console.log('Tags (should be in column B):', requestBody.values[0][1]);
   
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/Sheet1!A${nextRow}:G${nextRow}?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${nextRow}:G${nextRow}?valueInputOption=USER_ENTERED`,
     {
       method: 'PUT',
       headers: {
@@ -112,6 +116,95 @@ async function saveToGoogleSheets(article) {
   const result = await response.json();
   console.log('API success response:', result);
 }
+
+async function getOrCreateReadLaterSpreadsheet(token) {
+  // For now, use the default spreadsheet from config if available
+  if (CONFIG.SPREADSHEET_ID) {
+    console.log('Using configured spreadsheet ID:', CONFIG.SPREADSHEET_ID);
+    return CONFIG.SPREADSHEET_ID;
+  }
+  
+  const spreadsheetName = 'ReadLater';
+  
+  // First, try to find existing spreadsheet by name
+  try {
+    const existingId = await findSpreadsheetByName(token, spreadsheetName);
+    if (existingId) {
+      console.log('Found existing spreadsheet:', existingId);
+      // Store it for faster access next time
+      await chrome.storage.local.set({ readlater_spreadsheet_id: existingId });
+      return existingId;
+    }
+  } catch (error) {
+    console.log('Drive API search failed, falling back to storage check:', error.message);
+    
+    // Fallback: Check if we already have a spreadsheet stored
+    const stored = await chrome.storage.local.get(['readlater_spreadsheet_id']);
+    if (stored.readlater_spreadsheet_id) {
+      console.log('Using stored spreadsheet ID:', stored.readlater_spreadsheet_id);
+      return stored.readlater_spreadsheet_id;
+    }
+  }
+  
+  console.log(`No existing '${spreadsheetName}' spreadsheet found, creating new one...`);
+  
+  // Create a new spreadsheet with the specific name
+  const spreadsheetResponse = await fetch(
+    'https://sheets.googleapis.com/v4/spreadsheets',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        properties: {
+          title: spreadsheetName
+        }
+      })
+    }
+  );
+  
+  if (!spreadsheetResponse.ok) {
+    const errorText = await spreadsheetResponse.text();
+    console.error('Failed to create spreadsheet:', errorText);
+    throw new Error('Unable to create spreadsheet. Please configure SPREADSHEET_ID in config.js');
+  }
+  
+  const spreadsheet = await spreadsheetResponse.json();
+  const spreadsheetId = spreadsheet.spreadsheetId;
+  
+  // Store the spreadsheet ID for future use
+  await chrome.storage.local.set({ readlater_spreadsheet_id: spreadsheetId });
+  
+  console.log('Created new spreadsheet:', spreadsheetId);
+  console.log('Spreadsheet URL:', `https://docs.google.com/spreadsheets/d/${spreadsheetId}`);
+  
+  return spreadsheetId;
+}
+
+async function findSpreadsheetByName(token, name) {
+  const searchResponse = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${name}' and mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name)`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      }
+    }
+  );
+  
+  if (!searchResponse.ok) {
+    throw new Error('Drive API search failed');
+  }
+  
+  const searchResult = await searchResponse.json();
+  if (searchResult.files && searchResult.files.length > 0) {
+    return searchResult.files[0].id;
+  }
+  
+  return null;
+}
+
 
 async function getAuthToken() {
   return new Promise((resolve, reject) => {
