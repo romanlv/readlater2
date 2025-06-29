@@ -12,15 +12,16 @@ ability add multiple lists, so different accounts can contribute
 
 ## features 
 
-- dark mode, theems
+- dark mode, themes
 - offline support 
 - different storage options
 - save articles for offline reading
 - PWA 
 - preview
 - tags, notes, comments 
-- reading mode, fetch articles text only
+- (optional) reading mode, fetch articles text only
 - chrome extension to save articles for later
+- specify spreadsheet to save to, support multiple spreadsheets, call them lists
 
 
 ## nice to have
@@ -39,3 +40,9 @@ ability add multiple lists, so different accounts can contribute
 ## ideas 
 - highlight text and share TLDR version of the article 
 - name if RL - read later 
+
+
+
+## data structure 
+
+when saving to spreadsheet, define columns and mapping to the data 

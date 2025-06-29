@@ -195,16 +195,27 @@ function handleShareTarget() {
 
   // Check if this was a share target redirect
   if (queryParams.has('share_target')) {
-    console.log('Share target detected!');
+    console.log('🎯 Share target detected!');
+
+    // Show mobile-friendly alert for debugging
+    if (navigator.userAgent.match(/Mobile|Android|iPhone/i)) {
+      alert('📱 Share detected! Check console for details.');
+    }
+
     const hashParams = new URLSearchParams(window.location.hash.slice(1));
     const url = hashParams.get('url');
     const title = hashParams.get('title');
     const text = hashParams.get('text');
 
-    console.log('Shared content received:', { title, text, url });
+    console.log('📦 Shared content received:', { title, text, url });
+
+    // Show detailed mobile alert
+    if (navigator.userAgent.match(/Mobile|Android|iPhone/i)) {
+      alert(`📋 Shared data:\nTitle: ${title}\nText: ${text}\nURL: ${url}`);
+    }
 
     if (url) {
-      console.log('Adding URL to list:', url);
+      console.log('➕ Adding URL to list:', url);
       const li = document.createElement('li');
       // Create a link for the URL
       const a = document.createElement('a');
@@ -215,7 +226,7 @@ function handleShareTarget() {
       li.appendChild(a);
 
       // If there's extra text, add it as a paragraph
-      if (text && text !== url) {
+      if (text && text !== url && text.trim()) {
         const p = document.createElement('p');
         p.textContent = text;
         p.style.fontSize = '0.9em';
@@ -226,10 +237,25 @@ function handleShareTarget() {
 
       urlList.appendChild(li);
 
-      // Clean up the URL to avoid re-adding on refresh
-      history.replaceState(null, '', window.location.pathname);
+      console.log(
+        '⏰ Waiting 3 seconds before cleaning URL (for debugging)...',
+      );
+
+      // Delay URL cleanup so you can see the URL change
+      setTimeout(() => {
+        console.log('🧹 Cleaning up URL now');
+        history.replaceState(null, '', window.location.pathname);
+        updateCurrentUrlDisplay(); // Update display after cleanup
+      }, 3000);
     } else {
-      console.log('No URL found in shared data');
+      console.log('❌ No URL found in shared data');
+
+      // Even without URL, delay cleanup for debugging
+      setTimeout(() => {
+        console.log('🧹 Cleaning up URL (no URL found)');
+        history.replaceState(null, '', window.location.pathname);
+        updateCurrentUrlDisplay();
+      }, 3000);
     }
   }
 }
@@ -291,32 +317,6 @@ function checkServiceWorkerStatus() {
 // Run the check
 checkServiceWorkerStatus();
 
-// Test if all cached files are accessible
-async function testCachedFiles() {
-  const filesToTest = [
-    './',
-    './index.html',
-    './script.js',
-    './style.css',
-    './manifest.json',
-    './icons/icon-192.png',
-    './icons/icon-512.png',
-  ];
-
-  console.log('Testing file accessibility...');
-  for (const file of filesToTest) {
-    try {
-      const response = await fetch(file, { method: 'HEAD' });
-      console.log(`✅ ${file}: ${response.status}`);
-    } catch (error) {
-      console.error(`❌ ${file}:`, error);
-    }
-  }
-}
-
-// Run file test
-// testCachedFiles();
-
 // Display current URL with all params in PWA mode
 function updateCurrentUrlDisplay() {
   const currentUrlDiv = document.getElementById('current-url');
@@ -363,3 +363,77 @@ clearSwBtn.addEventListener('click', async () => {
     alert('Service Workers not supported');
   }
 });
+
+// --- Service Worker Log Viewer ---
+
+// Key for localStorage
+const SW_LOGS_KEY = 'swLogs';
+
+// Utility: get logs from localStorage
+const getSwLogs = () => {
+  try {
+    return JSON.parse(localStorage.getItem(SW_LOGS_KEY)) || [];
+  } catch {
+    return [];
+  }
+};
+
+// Utility: save logs to localStorage
+const saveSwLogs = (logs) => {
+  localStorage.setItem(SW_LOGS_KEY, JSON.stringify(logs));
+};
+
+// Utility: add a log
+const addSwLog = (log) => {
+  const logs = getSwLogs();
+  logs.push({
+    message: log,
+    time: new Date().toISOString(),
+  });
+  saveSwLogs(logs);
+  renderSwLogs();
+};
+
+// Utility: clear logs
+const clearSwLogs = () => {
+  localStorage.removeItem(SW_LOGS_KEY);
+  renderSwLogs();
+};
+
+// Render logs in a log area
+const renderSwLogs = () => {
+  let logArea = document.getElementById('sw-log-area');
+  if (!logArea) {
+    logArea = document.createElement('div');
+    logArea.id = 'sw-log-area';
+    logArea.style.cssText = 'background:#111;color:#0f0;padding:1em;font-family:monospace;max-height:200px;overflow:auto;margin:1em 0;';
+    const clearBtn = document.createElement('button');
+    clearBtn.textContent = 'Clear SW Logs';
+    clearBtn.onclick = clearSwLogs;
+    clearBtn.style.cssText = 'margin-bottom:0.5em;display:block;';
+    logArea.appendChild(clearBtn);
+    document.body.insertBefore(logArea, document.body.firstChild);
+  } else {
+    // Remove all except the button
+    while (logArea.childNodes.length > 1) logArea.removeChild(logArea.lastChild);
+  }
+  const logs = getSwLogs();
+  logs.forEach((entry) => {
+    const div = document.createElement('div');
+    div.textContent = `[${entry.time}] ${typeof entry.message === 'string' ? entry.message : JSON.stringify(entry.message)}`;
+    logArea.appendChild(div);
+  });
+};
+
+// Listen for SW_LOG messages
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    console.log('Message from SW:', event.data);
+    if (event.data && event.data.type === 'SW_LOG') {
+      event.data.args.forEach(addSwLog);
+    }
+  });
+}
+
+// Show logs on page load
+window.addEventListener('DOMContentLoaded', renderSwLogs);
