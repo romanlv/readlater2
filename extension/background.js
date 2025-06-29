@@ -79,12 +79,15 @@ async function saveToGoogleSheets(article) {
     majorDimension: 'ROWS',
     values: [[
       article.url || '',
+      article.title || '',
       article.tags ? article.tags.join(', ') : '',
-      article.notes || article.title || '',
+      article.notes || '',
       article.description || '',
       article.featuredImage || '',
       article.timestamp || '',
-      article.domain || ''
+      article.domain || '',
+      article.archived ? '1' : '',
+      article.favorite ? '1' : ''
     ]]
   };
   
@@ -94,7 +97,7 @@ async function saveToGoogleSheets(article) {
   console.log('Tags (should be in column B):', requestBody.values[0][1]);
   
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${nextRow}:G${nextRow}?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${nextRow}:J${nextRow}?valueInputOption=USER_ENTERED`,
     {
       method: 'PUT',
       headers: {
@@ -174,6 +177,9 @@ async function getOrCreateReadLaterSpreadsheet(token) {
   const spreadsheet = await spreadsheetResponse.json();
   const spreadsheetId = spreadsheet.spreadsheetId;
   
+  // Add headers to the new spreadsheet
+  await addHeadersToSpreadsheet(token, spreadsheetId);
+  
   // Store the spreadsheet ID for future use
   await chrome.storage.local.set({ readlater_spreadsheet_id: spreadsheetId });
   
@@ -205,6 +211,45 @@ async function findSpreadsheetByName(token, name) {
   return null;
 }
 
+async function addHeadersToSpreadsheet(token, spreadsheetId) {
+  const headers = [
+    'URL',
+    'Title',
+    'Tags', 
+    'Notes',
+    'Description',
+    'Featured Image',
+    'Timestamp',
+    'Domain',
+    'Archived',
+    'Favorite'
+  ];
+  
+  const requestBody = {
+    majorDimension: 'ROWS',
+    values: [headers]
+  };
+  
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:J1?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    }
+  );
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Failed to add headers:', errorText);
+    throw new Error(`Failed to add headers: ${response.statusText}`);
+  }
+  
+  console.log('Headers added successfully');
+}
 
 async function getAuthToken() {
   return new Promise((resolve, reject) => {
