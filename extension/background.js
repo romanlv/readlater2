@@ -121,12 +121,6 @@ async function saveToGoogleSheets(article) {
 }
 
 async function getOrCreateReadLaterSpreadsheet(token) {
-  // For now, use the default spreadsheet from config if available
-  if (CONFIG.SPREADSHEET_ID) {
-    console.log('Using configured spreadsheet ID:', CONFIG.SPREADSHEET_ID);
-    return CONFIG.SPREADSHEET_ID;
-  }
-  
   const spreadsheetName = 'ReadLater';
   
   // First, try to find existing spreadsheet by name

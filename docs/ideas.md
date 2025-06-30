@@ -35,6 +35,13 @@ ability add multiple lists, so different accounts can contribute
 - offline support 
 - tests (unit or integration) for PWA
 - bundler? liner, test framework 
+- monorepo
+- pnpm 
+
+## testing 
+
+- unit tests with  Vitest, React Testing Library, Mcw
+- practice TDD 
 
 
 ## ideas 

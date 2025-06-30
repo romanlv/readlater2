@@ -105,15 +105,254 @@ Provide instant article saving capabilities that work offline-first, with seamle
 
 ## 6. Integration Points
 
-### 6.1 PWA Integration
-- **Shared Database**: Same IndexedDB instance
-- **Real-time Updates**: Articles appear immediately in PWA
-- **Bidirectional Sync**: Changes in PWA reflect in extension
+### 6.1 Google Sheets Integration - Implementation Details
 
-### 6.2 Google Sheets Sync
-- **Background Sync**: PWA handles Google Sheets synchronization
-- **Conflict Resolution**: Local changes take precedence
-- **Offline Queue**: Sync when connection restored
+The extension integrates directly with Google Sheets API for data storage, eliminating the need for a separate backend service.
+
+#### 6.1.1 Authentication Setup
+
+**OAuth 2.0 Configuration in manifest.json:**
+```json
+{
+  "permissions": [
+    "activeTab",
+    "storage", 
+    "scripting",
+    "identity"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "https://sheets.googleapis.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive.metadata.readonly"
+    ]
+  }
+}
+```
+
+**Authentication Implementation:**
+```javascript
+async function getAuthToken() {
+  return new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ interactive: true }, (token) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(token);
+      }
+    });
+  });
+}
+```
+
+#### 6.1.2 Spreadsheet Management
+
+**Auto-Creation of ReadLater Spreadsheet:**
+```javascript
+async function getOrCreateReadLaterSpreadsheet(token) {
+  const spreadsheetName = 'ReadLater';
+  
+  // Search for existing spreadsheet
+  try {
+    const existingId = await findSpreadsheetByName(token, spreadsheetName);
+    if (existingId) {
+      await chrome.storage.local.set({ readlater_spreadsheet_id: existingId });
+      return existingId;
+    }
+  } catch (error) {
+    // Fallback to stored ID
+    const stored = await chrome.storage.local.get(['readlater_spreadsheet_id']);
+    if (stored.readlater_spreadsheet_id) {
+      return stored.readlater_spreadsheet_id;
+    }
+  }
+  
+  // Create new spreadsheet
+  const spreadsheetResponse = await fetch(
+    'https://sheets.googleapis.com/v4/spreadsheets',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        properties: { title: spreadsheetName }
+      })
+    }
+  );
+  
+  const spreadsheet = await spreadsheetResponse.json();
+  const spreadsheetId = spreadsheet.spreadsheetId;
+  
+  // Add headers and store ID
+  await addHeadersToSpreadsheet(token, spreadsheetId);
+  await chrome.storage.local.set({ readlater_spreadsheet_id: spreadsheetId });
+  
+  return spreadsheetId;
+}
+```
+
+**Header Setup:**
+```javascript
+async function addHeadersToSpreadsheet(token, spreadsheetId) {
+  const headers = [
+    'URL', 'Title', 'Tags', 'Notes', 'Description', 
+    'Featured Image', 'Timestamp', 'Domain', 'Archived', 'Favorite'
+  ];
+  
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:J1?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        majorDimension: 'ROWS',
+        values: [headers]
+      })
+    }
+  );
+}
+```
+
+#### 6.1.3 Data Persistence
+
+**Article Saving Implementation:**
+```javascript
+async function saveToGoogleSheets(article) {
+  const token = await getAuthToken();
+  const spreadsheetId = await getOrCreateReadLaterSpreadsheet(token);
+  
+  // Find next empty row
+  const getResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A:A`,
+    {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }
+  );
+  
+  let nextRow = 1;
+  if (getResponse.ok) {
+    const data = await getResponse.json();
+    if (data.values && data.values.length > 0) {
+      nextRow = data.values.length + 1;
+    }
+  }
+  
+  // Save article data
+  const requestBody = {
+    majorDimension: 'ROWS',
+    values: [[
+      article.url || '',
+      article.title || '',
+      article.tags ? article.tags.join(', ') : '',
+      article.notes || '',
+      article.description || '',
+      article.featuredImage || '',
+      article.timestamp || '',
+      article.domain || '',
+      article.archived ? '1' : '',
+      article.favorite ? '1' : ''
+    ]]
+  };
+  
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${nextRow}:J${nextRow}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    }
+  );
+  
+  if (!response.ok) {
+    throw new Error(`Failed to save to Google Sheets: ${response.statusText}`);
+  }
+}
+```
+
+#### 6.1.4 Page Data Extraction
+
+**Content Extraction Logic:**
+```javascript
+function extractPageData() {
+  const url = window.location.href;
+  const title = document.title || url;
+  
+  let description = '';
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) {
+    description = metaDesc.content;
+  }
+  
+  let featuredImage = '';
+  const ogImage = document.querySelector('meta[property="og:image"]');
+  if (ogImage) {
+    featuredImage = ogImage.content;
+  }
+  
+  return {
+    url,
+    title,
+    description,
+    featuredImage,
+    timestamp: new Date().toISOString(),
+    domain: new URL(url).hostname
+  };
+}
+```
+
+#### 6.1.5 Configuration Setup
+
+**Configuration (config.js):**
+```javascript
+const CONFIG = {
+  // Extension configuration - OAuth client_id is configured in manifest.json
+  // No pre-configuration needed - spreadsheet is created automatically per user
+};
+```
+
+**Google Cloud Console Setup Steps:**
+1. Create new project in Google Cloud Console
+2. Enable Google Sheets API and Google Drive API
+3. Create OAuth 2.0 credentials (Web application type)
+4. Add authorized JavaScript origins:
+   - `chrome-extension://YOUR_EXTENSION_ID`
+5. Copy client ID to manifest.json oauth2.client_id
+
+**How It Works:**
+- Each user gets their own "ReadLater" spreadsheet created automatically
+- Extension searches for existing "ReadLater" spreadsheet on first use
+- If not found, creates new spreadsheet with proper headers
+- Spreadsheet ID is stored locally for subsequent uses
+
+### 6.2 Data Schema
+
+The extension uses a 10-column schema in Google Sheets:
+
+| Column | Field | Type | Description |
+|--------|-------|------|-------------|
+| A | URL | String | Primary identifier |
+| B | Title | String | Page title |
+| C | Tags | String | Comma-separated tags |
+| D | Notes | String | User notes |
+| E | Description | String | Meta description |
+| F | Featured Image | String | OpenGraph image URL |
+| G | Timestamp | String | ISO datetime |
+| H | Domain | String | Website hostname |
+| I | Archived | String | '1' if archived |
+| J | Favorite | String | '1' if favorited |
 
 ## 7. Success Metrics
 
