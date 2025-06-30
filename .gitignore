@@ -1,3 +1,5 @@
 .env
 config.js
 .opencode/*
+node_modules
+dist

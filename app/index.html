@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Read It Later</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1976d2">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192">
+  <!-- CSS only in head; scripts moved to end of body for proper initialization order -->
+</head>
+<body>
+  <div class="container">
+    <h1>Read It Later v3.1</h1>
+    <div id="current-url" style="font-size: 0.95em; color: #333; background: #e3f2fd; padding: 6px 10px; border-radius: 5px; margin-bottom: 10px; word-break: break-all;"></div>
+    <ul id="url-list"></ul>
+    <div class="input-group">
+      <input id="url-input" type="text" placeholder="Enter URL">
+      <button id="add-url">Add URL</button>
+    </div>
+    <div class="buttons">
+      <button id="load">Load from Google Sheets</button>
+      <button id="save">Save to Google Sheets</button>
+      <button id="test-share" style="background: orange; margin-top: 10px;">Test Share Target</button>
+      <button id="clear-sw" style="background: red; color: white; margin-top: 10px;">Clear Service Worker</button>
+    </div>
+  </div>
+  <!-- load config and core logic first, then API scripts so that gapiLoaded/gisLoaded are defined -->
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+  <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      // Use the new service worker file
+      navigator.serviceWorker.register('./sw.js', {
+        updateViaCache: 'none' // Always check for updates to sw.js
+      }).then(registration => {
+        console.log('SW registered:', registration);
+        console.log('SW scope:', registration.scope);
+        
+        // Check for updates every time the page loads
+        registration.update();
+        
+        // Handle updates
+        registration.addEventListener('updatefound', () => {
+          console.log('SW update found');
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('New SW installed, reloading...');
+              window.location.reload();
+            }
+          });
+        });
+      }).catch(err => {
+        console.error('SW registration failed:', err);
+        console.error('Current URL:', window.location.href);
+        console.error('Trying to register: ./sw.js');
+      });
+    } else {
+      console.error('Service Workers not supported');
+    }
+  </script>
+</body>
+</html>
