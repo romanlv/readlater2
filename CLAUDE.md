@@ -37,6 +37,8 @@ Articles are stored in Google Sheets with this schema:
 
 ## Development Commands
 
+use `context7` mcp to get up to date documentation and code examples for the libraries and tools used in the project
+
 ### Root Level
 - `pnpm dev` - Start development servers for all packages
 - `pnpm build` - Build all packages for production
