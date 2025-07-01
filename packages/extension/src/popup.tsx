@@ -5,52 +5,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, BookOpen, X } from 'lucide-react';
-
-interface ArticleData {
-  url: string;
-  title: string;
-  description: string;
-  featuredImage: string;
-  timestamp: string;
-  domain: string;
-  tags?: string[];
-  notes?: string;
-  archived?: boolean;
-  favorite?: boolean;
-}
-
-interface MessageResponse {
-  success: boolean;
-  error?: string;
-}
+import type { ArticleData, SaveArticleResponse } from '@readlater/core';
+import { extractPageDataFromDocument } from '@readlater/core';
 
 type StatusType = 'success' | 'error' | 'loading' | null;
 
-function extractPageData(): ArticleData {
-  const url = window.location.href;
-  const title = document.title || url;
-  
-  let description = '';
-  const metaDesc = document.querySelector('meta[name="description"]') as HTMLMetaElement;
-  if (metaDesc) {
-    description = metaDesc.content;
-  }
-  
-  let featuredImage = '';
-  const ogImage = document.querySelector('meta[property="og:image"]') as HTMLMetaElement;
-  if (ogImage) {
-    featuredImage = ogImage.content;
-  }
-  
-  return {
-    url,
-    title,
-    description,
-    featuredImage,
-    timestamp: new Date().toISOString(),
-    domain: new URL(url).hostname
-  };
-}
 
 export default function Popup() {
   const [pageData, setPageData] = useState<ArticleData | null>(null);
@@ -66,10 +25,24 @@ export default function Popup() {
         
         const [result] = await chrome.scripting.executeScript({
           target: { tabId: tab.id! },
-          func: extractPageData
+          func: extractPageDataFromDocument
         });
         
-        setPageData(result.result || null);
+        const partialData = result.result;
+        if (partialData && partialData.url && partialData.title) {
+          setPageData({
+            url: partialData.url,
+            title: partialData.title,
+            description: partialData.description || '',
+            featuredImage: partialData.featuredImage || '',
+            timestamp: partialData.timestamp || new Date().toISOString(),
+            domain: partialData.domain || '',
+            tags: partialData.tags || [],
+            notes: partialData.notes || '',
+            archived: partialData.archived || false,
+            favorite: partialData.favorite || false,
+          });
+        }
       } catch (error) {
         console.error('Error getting page data:', error);
         setStatus({ type: 'error', message: 'Error loading page data' });
@@ -97,9 +70,9 @@ export default function Popup() {
       setStatus({ type: 'loading', message: 'Saving article...' });
       setIsLoading(true);
       
-      const response: MessageResponse = await chrome.runtime.sendMessage({
+      const response: SaveArticleResponse = await chrome.runtime.sendMessage({
         action: 'saveArticle',
-        data: articleData
+        articleData: articleData
       });
       
       if (response && response.success) {
@@ -110,7 +83,7 @@ export default function Popup() {
         }, 1500);
       } else {
         const errorMsg = response?.error || 'Unknown error occurred';
-        setStatus({ type: 'error', message: `Failed to save: ${errorMsg}` });
+        setStatus({ type: 'error', message: response?.message || `Failed to save: ${errorMsg}` });
       }
     } catch (error) {
       console.error('Error saving article:', error);

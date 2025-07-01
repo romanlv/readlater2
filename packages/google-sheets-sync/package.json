@@ -1,0 +1,23 @@
+{
+  "name": "@readlater/google-sheets-sync",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@readlater/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.29.0",
+    "@types/chrome": "^0.0.328",
+    "eslint": "^9.29.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.34.1"
+  }
+}
