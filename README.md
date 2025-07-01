@@ -1,8 +1,5 @@
-## folder structure 
+# readlater
 
-PoC code in:
-- extension - chrome extension 
-- app - pwa app 
+this is a project to build Read It Later (Pocket) replacement without server side, so users can own their data and don't have to self host backend.
 
-should be migrated to packages/app and packages/extension
-
+current status: `in progress`
