@@ -12,12 +12,14 @@ export default defineConfig({
     filename: 'sw.ts',
     registerType: 'autoUpdate',
     injectRegister: false,
-
     manifest: {
-      name: 'readlater-app',
-      short_name: 'readlater-app',
-      description: 'readlater-app',
-      theme_color: '#ffffff',
+      name: 'Read It Later',
+      short_name: 'ReadLater',
+      description: 'Save articles to read later with Google Sheets sync',
+      theme_color: '#1976d2',
+      background_color: '#ffffff',
+      display: 'standalone',
+      start_url: '/',
 
       icons: [{
         src: 'pwa-64x64.png',
@@ -37,6 +39,17 @@ export default defineConfig({
         type: 'image/png',
         purpose: 'maskable',
       }],
+
+      share_target: {
+        action: '/',
+        method: 'POST',
+        enctype: 'multipart/form-data',
+        params: {
+          title: 'title',
+          text: 'text',
+          url: 'url'
+        }
+      }
     },
 
     injectManifest: {
@@ -54,5 +67,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  server: {
+    port: 3030,
   },
 })

@@ -16,7 +16,7 @@ The system uses Google Sheets API for data persistence and synchronization acros
 ### Monorepo Structure
 - **packages/app/**: React PWA with Vite, TypeScript, Tailwind CSS, and PWA features
 - **packages/extension/**: Chrome extension with React and Vite build system
-- **packages/google-spreadsheet-sync/**: Shared Google Sheets integration library
+- **packages/google-sheets-sync/**: Shared Google Sheets integration library
 - **app/**: Legacy vanilla JavaScript implementation (deprecated)
 - **extension/**: Legacy extension files (deprecated)
 
@@ -80,3 +80,21 @@ use `context7` mcp to get up to date documentation and code examples for the lib
 
 ### Migration Status
 The codebase is transitioning from legacy implementations (app/, extension/) to modern packages structure. The packages/ directory contains the current active development with proper TypeScript, modern React, and build tooling.
+
+## Testing
+
+- use `docs/testing-guide.md` for testing guidance
+
+
+### Code Organization
+
+inside bigger packages e.g. packages/app organize code into features 
+the general rule is all the code that is fetched externallly or depends on the storage should be in the `src/features/{feature-name}` folder, `src/components` should be used for shared components that are used across features. Avoid excessive nesting of folders, generally feature folder can be flat, but if there are many files, it's ok to nest them.
+```
+packages/app/src/features
+└── articles
+    ├── list.tsx
+    ├── list.test.tsx
+    ├── repo.ts
+    └── types.ts
+```
