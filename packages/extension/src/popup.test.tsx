@@ -55,6 +55,9 @@ beforeEach(() => {
   // Default successful page data extraction
   mockChrome.tabs.query.mockResolvedValue([{ id: 1 }])
   mockChrome.scripting.executeScript.mockResolvedValue([{ result: mockPageData }])
+
+  // Suppress expected console errors
+  vi.spyOn(console, 'error').mockImplementation(() => {});
 })
 
 describe('Popup Rendering', () => {
@@ -216,6 +219,41 @@ describe('User Interactions', () => {
     await user.click(cancelButton)
 
     expect(mockWindowClose).toHaveBeenCalled()
+  })
+
+test("save button wires to the sync engine", async () => {
+    const user = userEvent.setup()
+    const mockSaveResponse: SaveArticleResponse = {
+      success: true,
+      message: 'Article saved successfully'
+    }
+    mockChrome.runtime.sendMessage.mockResolvedValue(mockSaveResponse)
+
+    render(<Popup />)
+
+    // Wait for page data to load
+    await waitFor(() => {
+      expectElementToExist(findByTextContent('Test Article Title'))
+    })
+
+    // Submit form
+    const saveButton = findByRole('button', { name: /save article/i }) as HTMLButtonElement
+    await user.click(saveButton)
+
+    // Wait for success message
+    await waitFor(() => {
+      expectElementToExist(findByTextContent('Article saved successfully!'))
+    })
+
+    // Verify runtime message was sent with correct data
+    expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
+      action: 'saveArticle',
+      articleData: {
+        ...mockPageData,
+        tags: [],
+        notes: ''
+      }
+    })
   })
 
 test("automatically closes window after successful save", async () => {

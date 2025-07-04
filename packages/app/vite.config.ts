@@ -70,5 +70,13 @@ export default defineConfig({
   },
   server: {
     port: 3030,
+    allowedHosts: ['readitlater-dev.10fold.dev'],
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    },
   },
 })

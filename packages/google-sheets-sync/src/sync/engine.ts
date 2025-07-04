@@ -1,5 +1,5 @@
 import { ArticleData, SyncEngine, SyncResult, AuthProvider } from '@readlater/core';
-import { GoogleSpreadsheetManager, SpreadsheetStorage, articleToSheetRow } from '../spreadsheet/index.js';
+import { GoogleSpreadsheetManager, SpreadsheetStorage, articleToSheetRow, sheetRowToArticle } from '../spreadsheet/index.js';
 
 export class GoogleSheetsSyncEngine implements SyncEngine {
   private manager: GoogleSpreadsheetManager;
@@ -40,9 +40,27 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
     }
   }
 
-  // Future implementations for read operations
   async getArticles(): Promise<ArticleData[]> {
-    throw new Error('getArticles not implemented yet');
+    try {
+      console.log('Getting auth token...');
+      const token = await this.manager['authProvider'].getAuthToken();
+      
+      console.log('Got auth token, getting/creating spreadsheet...');
+      const spreadsheetId = await this.manager.getOrCreateSpreadsheet();
+      
+      console.log('Fetching articles from spreadsheet ID:', spreadsheetId);
+      
+      const rows = await this.manager.getAllRows(token, spreadsheetId);
+      const articles = rows
+        .filter(row => row.length > 0 && row[0]) // Filter out empty rows
+        .map(row => sheetRowToArticle(row));
+      
+      console.log(`Successfully loaded ${articles.length} articles from Google Sheets`);
+      return articles;
+    } catch (error) {
+      console.error('Error loading articles:', error);
+      throw error;
+    }
   }
 
   async deleteArticle(_url: string): Promise<SyncResult> {

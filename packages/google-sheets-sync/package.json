@@ -8,7 +8,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest"
   },
   "dependencies": {
     "@readlater/core": "workspace:*"
@@ -18,6 +19,8 @@
     "@types/chrome": "^0.0.328",
     "eslint": "^9.29.0",
     "typescript": "~5.8.3",
-    "typescript-eslint": "^8.34.1"
+    "typescript-eslint": "^8.34.1",
+    "vitest": "^1.6.0",
+    "jsdom": "^24.1.1"
   }
 }

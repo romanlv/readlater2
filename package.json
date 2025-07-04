@@ -6,11 +6,14 @@
     "packages/*"
   ],
   "scripts": {
+    "app": "pnpm run --filter 'readlater-app'",
+    "ext": "pnpm run --filter 'readlater-extension'",
     "dev": "pnpm --parallel --recursive dev",
+    "dev:libs": "pnpm --parallel --filter '@readlater/*' dev",
+    "build:libs": "pnpm --filter '@readlater/*' build",
     "build": "pnpm --recursive build",
-    "lint": "pnpm --recursive lint",
-    "tunnel": "cloudflared tunnel run --token eyJhIjoiYTljNjFkMzAyYWIwNTE1OWQ4OTUzOTRkYjgwYzRlYjYiLCJ0IjoiNWI2YjZkMTMtODdmOS00Mzg4LTgyM2MtYjI1NGFhMDQzZmEzIiwicyI6Ik16SmtNall3T1RjdFpqRmhOQzAwWVRZNExUaGxOekV0T1RFNU5qVTFaV1U1WVdVeiJ9",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test run"
   },
   "keywords": [],
   "author": "",

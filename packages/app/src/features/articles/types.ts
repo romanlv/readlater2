@@ -3,7 +3,6 @@ export * from '@readlater/core';
 export interface GoogleSheetsConfig {
   CLIENT_ID: string;
   API_KEY: string;
-  SPREADSHEET_ID: string;
 }
 
 export interface ShareTargetData {
