@@ -12,9 +12,10 @@ import type { PwaAuthProvider } from '@readlater/google-sheets-sync';
 
 interface ArticleListProps {
   config: GoogleSheetsConfig;
+  pendingArticle?: ArticleData | null;
 }
 
-export function ArticleList({ config }: ArticleListProps) {
+export function ArticleList({ config, pendingArticle }: ArticleListProps) {
   const [articles, setArticles] = useState<ArticleData[]>([]);
   const [urlInput, setUrlInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -70,6 +71,12 @@ export function ArticleList({ config }: ArticleListProps) {
     checkAuthAndLoad();
   }, [authProvider, handleLoad]);
 
+  useEffect(() => {
+    if (pendingArticle) {
+      setArticles(prev => [pendingArticle, ...prev]);
+    }
+  }, [pendingArticle]);
+
   const addArticle = () => {
     const url = urlInput.trim();
     if (!url) return;
@@ -118,7 +125,7 @@ export function ArticleList({ config }: ArticleListProps) {
 
   return (
     <div className="container max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold text-center mb-4">Read It Later</h1>
+      <h1 className="text-2xl font-bold text-center mb-4">Read It Later 2.0b</h1>
       
       {isLoading ? (
         <p>Loading...</p>

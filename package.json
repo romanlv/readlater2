@@ -13,14 +13,19 @@
     "build:libs": "pnpm --filter '@readlater/*' build",
     "build": "pnpm --recursive build",
     "lint": "pnpm -r lint",
-    "test": "pnpm -r test run"
+    "test": "pnpm -r test run",
+    "typecheck": "pnpm -r typecheck"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "this is a project to build Read It Later (Pocket) replacement without server side, so users can own their data and don't have to self host backend.",
   "devDependencies": {
-    "pnpm": "^9.0.0",
-    "eslint": "^9.29.0"
+    "eslint": "^9.29.0",
+    "pnpm": "^9.0.0"
+  },
+  "main": "browser-test.js",
+  "directories": {
+    "doc": "docs"
   }
 }

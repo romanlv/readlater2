@@ -26,13 +26,6 @@ declare global {
   }
 }
 
-export interface PwaAuthConfig {
-  clientId: string;
-  apiKey: string;
-}
-
-import { AuthProvider } from '@readlater/core';
-
 const TOKEN_STORAGE_KEY = 'readlater_google_auth_token';
 const TOKEN_EXPIRY_STORAGE_KEY = 'readlater_google_auth_token_expiry';
 
@@ -47,6 +40,7 @@ export interface PwaAuthConfig {
   clientId: string;
   apiKey: string;
 }
+
 
 export class PwaAuthProvider implements AuthProvider {
   private config: PwaAuthConfig;

@@ -1,5 +1,6 @@
 import { AuthProvider } from '@readlater/core';
 import { SPREADSHEET_HEADERS } from './schema.js';
+import { GoogleDriveFile, GoogleDriveFileList, GoogleSpreadsheet, GoogleValueRange, SpreadsheetConfig } from '../types.js';
 
 const CONFIG_FILE_NAME = 'readlater.config.json';
 
@@ -38,28 +39,33 @@ export class GoogleSpreadsheetManager {
     private spreadsheetName: string = 'ReadLater'
   ) {}
 
-  private async _fetch(url: string, options: RequestInit): Promise<Record<string, unknown>> {
+  private async _fetch<T>(url: string, options: RequestInit): Promise<T> {
     const response = await fetch(url, options);
     if (response.ok) {
       // Handle cases where the response might be empty
       const text = await response.text();
-      return text ? JSON.parse(text) : {};
+      return text ? JSON.parse(text) : ({} as T);
     }
-    const errorData = await response.json().catch(() => ({ error: { message: 'Failed to parse API error response.' } }));
+    const errorData = (await response.json().catch(() => ({ error: { message: 'Failed to parse API error response.' } }))) as {
+      error?: { message?: string };
+    };
     const message = errorData.error?.message || `API request failed with status ${response.status}`;
     throw new Error(message);
   }
 
   private async getFileIdFromAppData(token: string): Promise<string | null> {
-    const result = await this._fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const configFile = result.files?.find((f: { name: string }) => f.name === CONFIG_FILE_NAME);
+    const result = await this._fetch<GoogleDriveFileList>(
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)`,
+      {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }
+    );
+    const configFile = result.files?.find((f: GoogleDriveFile) => f.name === CONFIG_FILE_NAME);
     return configFile ? configFile.id : null;
   }
 
   private async readSpreadsheetIdFromAppData(token: string, fileId: string): Promise<string | null> {
-    const result = await this._fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    const result = await this._fetch<SpreadsheetConfig>(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     return result.spreadsheetId || null;
@@ -125,7 +131,7 @@ export class GoogleSpreadsheetManager {
 
   private async findSpreadsheetByName(token: string, name: string): Promise<string | null> {
     const query = `name='${name}' and mimeType='application/vnd.google-apps.spreadsheet' and 'root' in parents and trashed=false`;
-    const result = await this._fetch(
+    const result = await this._fetch<GoogleDriveFileList>(
       `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`,
       { headers: { 'Authorization': `Bearer ${token}` } }
     );
@@ -133,7 +139,7 @@ export class GoogleSpreadsheetManager {
   }
 
   private async createSpreadsheet(token: string): Promise<string> {
-    const spreadsheet = await this._fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+    const spreadsheet = await this._fetch<GoogleSpreadsheet>('https://sheets.googleapis.com/v4/spreadsheets', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ properties: { title: this.spreadsheetName } })
@@ -154,7 +160,7 @@ export class GoogleSpreadsheetManager {
   }
 
   async getNextRowNumber(token: string, spreadsheetId: string): Promise<number> {
-    const range = await this._fetch(
+    const range = await this._fetch<GoogleValueRange>(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A:A?majorDimension=COLUMNS`,
       { headers: { 'Authorization': `Bearer ${token}` } }
     );
@@ -163,7 +169,7 @@ export class GoogleSpreadsheetManager {
   }
 
   async getAllRows(token: string, spreadsheetId: string): Promise<string[][]> {
-    const result = await this._fetch(
+    const result = await this._fetch<GoogleValueRange>(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A2:J`,
       { headers: { 'Authorization': `Bearer ${token}` } }
     );

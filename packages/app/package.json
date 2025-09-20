@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "tunnel": "dotenv -e .env -- sh -c 'cloudflared tunnel run --token $CLOUDFLARED_TOKEN'",
+    "typecheck": "tsc --noEmit",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-pwa-icons": "pwa-assets-generator"
+    "generate-pwa-icons": "echo 'PWA icons created manually using sips'",
+    "test": "vitest"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",

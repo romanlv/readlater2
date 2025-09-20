@@ -6,10 +6,10 @@ export class ChromeAuthProvider implements AuthProvider {
       chrome.identity.getAuthToken({ interactive: true }, (result) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
-        } else if (!result || typeof result !== 'string') {
-          reject(new Error('No token received'));
-        } else {
+        } else if (typeof result === 'string') {
           resolve(result);
+        } else {
+          reject(new Error('No token received'));
         }
       });
     });

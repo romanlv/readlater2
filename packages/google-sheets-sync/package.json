@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "eslint .",
@@ -17,10 +18,11 @@
   "devDependencies": {
     "@eslint/js": "^9.29.0",
     "@types/chrome": "^0.0.328",
+    "@vitest/ui": "^3.2.4",
     "eslint": "^9.29.0",
+    "jsdom": "^24.1.1",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
-    "vitest": "^1.6.0",
-    "jsdom": "^24.1.1"
+    "vitest": "^1.6.0"
   }
 }

@@ -18,15 +18,15 @@ describe('GoogleSpreadsheetManager', () => {
     vi.spyOn(storage, 'getSpreadsheetId').mockResolvedValue(null);
     vi.spyOn(storage, 'setSpreadsheetId').mockResolvedValue(undefined);
     
-    const mockFetch = (data: Record<string, unknown>) => {
+    const mockFetch = (data: Record<string, unknown>): Promise<Response> => {
       return Promise.resolve({
         ok: true,
         text: () => Promise.resolve(JSON.stringify(data)),
         json: () => Promise.resolve(data),
-      });
+      } as Response);
     };
     
-    global.fetch = vi.fn().mockImplementation((url) => {
+    global.fetch = vi.fn().mockImplementation((url: string) => {
       if (url.includes('appDataFolder')) {
         return mockFetch({ files: [] });
       }
@@ -41,17 +41,19 @@ describe('GoogleSpreadsheetManager', () => {
   });
 
   test('should prioritize spreadsheet ID from AppDataFolder', async () => {
-    (global.fetch as vi.Mock)
-      .mockResolvedValueOnce(Promise.resolve({ // Find config file in AppData
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        // Find config file in AppData
         ok: true,
         json: () => Promise.resolve({ files: [{ id: 'config-file-id', name: 'readlater.config.json' }] }),
-        text: () => Promise.resolve(JSON.stringify({ files: [{ id: 'config-file-id', name: 'readlater.config.json' }] })),
-      }))
-      .mockResolvedValueOnce(Promise.resolve({ // Read config file content
+        text: () => Promise.resolve(JSON.stringify({ files: [{ id: 'config-file-id', name: 'readlater.config.json' }] }))
+      } as Response)
+      .mockResolvedValueOnce({
+        // Read config file content
         ok: true,
         json: () => Promise.resolve({ spreadsheetId: 'app-data-sheet-id' }),
-        text: () => Promise.resolve(JSON.stringify({ spreadsheetId: 'app-data-sheet-id' })),
-      }));
+        text: () => Promise.resolve(JSON.stringify({ spreadsheetId: 'app-data-sheet-id' }))
+      } as Response);
 
     const spreadsheetId = await manager.getOrCreateSpreadsheet();
     expect(spreadsheetId).toBe('app-data-sheet-id');
@@ -59,22 +61,25 @@ describe('GoogleSpreadsheetManager', () => {
   });
 
   test('should fall back to searching Drive if not in AppData or local storage', async () => {
-    (global.fetch as vi.Mock)
-      .mockResolvedValueOnce(Promise.resolve({ // AppData search fails
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        // AppData search fails
         ok: true,
         json: () => Promise.resolve({ files: [] }),
-        text: () => Promise.resolve(JSON.stringify({ files: [] })),
-      }))
-      .mockResolvedValueOnce(Promise.resolve({ // Drive search succeeds
+        text: () => Promise.resolve(JSON.stringify({ files: [] }))
+      } as Response)
+      .mockResolvedValueOnce({
+        // Drive search succeeds
         ok: true,
         json: () => Promise.resolve({ files: [{ id: 'drive-sheet-id', name: 'ReadLater' }] }),
-        text: () => Promise.resolve(JSON.stringify({ files: [{ id: 'drive-sheet-id', name: 'ReadLater' }] })),
-      }))
-      .mockResolvedValueOnce(Promise.resolve({ // Write to AppData succeeds
+        text: () => Promise.resolve(JSON.stringify({ files: [{ id: 'drive-sheet-id', name: 'ReadLater' }] }))
+      } as Response)
+      .mockResolvedValueOnce({
+        // Write to AppData succeeds
         ok: true,
         json: () => Promise.resolve({}),
-        text: () => Promise.resolve(JSON.stringify({})),
-      }));
+        text: () => Promise.resolve(JSON.stringify({}))
+      } as Response);
 
     const spreadsheetId = await manager.getOrCreateSpreadsheet();
     expect(spreadsheetId).toBe('drive-sheet-id');
@@ -82,16 +87,25 @@ describe('GoogleSpreadsheetManager', () => {
   });
 
   test('should create a new spreadsheet if not found anywhere', async () => {
-    (global.fetch as vi.Mock)
-      .mockResolvedValueOnce(Promise.resolve({ ok: true, json: () => Promise.resolve({ files: [] }), text: () => Promise.resolve(JSON.stringify({ files: [] })) })) // AppData search
-      .mockResolvedValueOnce(Promise.resolve({ ok: true, json: () => Promise.resolve({ files: [] }), text: () => Promise.resolve(JSON.stringify({ files: [] })) })) // Drive search
-      .mockResolvedValueOnce(Promise.resolve({ // Create spreadsheet
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ files: [] }),
+        text: () => Promise.resolve(JSON.stringify({ files: [] }))
+      } as Response) // AppData search
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ files: [] }),
+        text: () => Promise.resolve(JSON.stringify({ files: [] }))
+      } as Response) // Drive search
+      .mockResolvedValueOnce({
+        // Create spreadsheet
         ok: true,
         json: () => Promise.resolve({ spreadsheetId: 'new-sheet-id' }),
-        text: () => Promise.resolve(JSON.stringify({ spreadsheetId: 'new-sheet-id' })),
-      }))
-      .mockResolvedValueOnce(Promise.resolve({ ok: true, json: () => Promise.resolve({}), text: () => Promise.resolve(JSON.stringify({})) })) // Add headers
-      .mockResolvedValueOnce(Promise.resolve({ ok: true, json: () => Promise.resolve({}), text: () => Promise.resolve(JSON.stringify({})) })); // Write to AppData
+        text: () => Promise.resolve(JSON.stringify({ spreadsheetId: 'new-sheet-id' }))
+      } as Response)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}), text: () => Promise.resolve(JSON.stringify({})) } as Response) // Add headers
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}), text: () => Promise.resolve(JSON.stringify({})) } as Response); // Write to AppData
 
     const spreadsheetId = await manager.getOrCreateSpreadsheet();
     expect(spreadsheetId).toBe('new-sheet-id');

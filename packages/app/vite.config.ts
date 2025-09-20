@@ -1,11 +1,13 @@
 import { VitePWA } from 'vite-plugin-pwa';
-import { defineConfig } from 'vite'
+/// <reference types="vitest" />
+import { defineConfig, mergeConfig } from 'vite'
+import vitestConfig from './vitest.config'
 import react from '@vitejs/plugin-react'
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default mergeConfig(defineConfig({
   plugins: [react(), tailwindcss(), VitePWA({
     strategies: 'injectManifest',
     srcDir: 'src',
@@ -16,6 +18,7 @@ export default defineConfig({
       name: 'Read It Later',
       short_name: 'ReadLater',
       description: 'Save articles to read later with Google Sheets sync',
+      id: '/',
       theme_color: '#1976d2',
       background_color: '#ffffff',
       display: 'standalone',
@@ -49,7 +52,19 @@ export default defineConfig({
           text: 'text',
           url: 'url'
         }
-      }
+      },
+
+      screenshots: [{
+        src: 'screenshot-wide.png',
+        sizes: '640x320',
+        type: 'image/png',
+        form_factor: 'wide',
+      }, {
+        src: 'screenshot-320x320.png',
+        sizes: '320x320',
+        type: 'image/png',
+        form_factor: 'narrow',
+      }]
     },
 
     injectManifest: {
@@ -57,7 +72,7 @@ export default defineConfig({
     },
 
     devOptions: {
-      enabled: false,
+      enabled: true,
       navigateFallback: 'index.html',
       suppressWarnings: true,
       type: 'module',
@@ -72,11 +87,12 @@ export default defineConfig({
     port: 3030,
     allowedHosts: ['readitlater-dev.10fold.dev'],
     headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Cross-Origin-Embedder-Policy': 'credentialless',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
       'Expires': '0',
     },
   },
-})
+  define: {
+    'import.meta.env.DEV': true, // Ensure DEV is properly defined for the service worker
+  },
+}), vitestConfig)

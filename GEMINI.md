@@ -51,10 +51,12 @@ Use `pnpm` to run commands from the root directory.
 -   `pnpm dev`: Start development servers for all packages.
 -   `pnpm build`: Build all packages for production.
 -   `pnpm lint`: Run ESLint across all packages.
+-   `pnpm typecheck`: Run TypeScript type-checking across all packages.
+-   `pnpm test`: Run Vitest tests across all packages.
 
 Individual packages also have their own `dev`, `build`, and `lint` scripts that can be run from their respective directories (e.g., `cd packages/app && pnpm dev`).
 
-Always run `lint` and `test` after finishing a feature or before committing.
+Always run `lint`, `typecheck`, and `test` after finishing a feature or before committing.
 
 ## Code Organization
 

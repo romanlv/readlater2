@@ -31,7 +31,22 @@ The system uses Google Sheets API for data persistence and synchronization acros
 
 ### Data Integration
 Articles are stored in Google Sheets with this schema:
-- URL (primary key), Title, Tags, Notes, Description, Featured Image, Timestamp, Domain, Archived, Favorite
+
+```typescript
+interface ArticleData {
+  url: string;           // Primary key
+  title: string;
+  tags?: string[];
+  notes?: string;
+  description: string;
+  featuredImage: string; // From og:image meta tag
+  timestamp: string;
+  domain: string;
+  archived?: boolean;
+  favorite?: boolean;
+}
+```
+
 - Auto-creation of "ReadLater" spreadsheet per user
 - OAuth 2.0 authentication with Google Sheets API scopes
 
@@ -41,21 +56,27 @@ use `context7` mcp to get up to date documentation and code examples for the lib
 
 ### Root Level
 - `pnpm dev` - Start development servers for all packages
+- `pnpm dev:libs` - Start development for library packages only
 - `pnpm build` - Build all packages for production
+- `pnpm build:libs` - Build library packages only
 - `pnpm lint` - Run ESLint across all packages
+- `pnpm test` - Run tests across all packages
+- `pnpm typecheck` - Run TypeScript checking across all packages
+- `pnpm app [command]` - Run commands for app package specifically
+- `pnpm ext [command]` - Run commands for extension package specifically
 
-### PWA App (packages/app/)
+### Package level (packages/{package-name}/)
 - `pnpm dev` - Start development server with HMR
 - `pnpm build` - TypeScript compilation + Vite production build
 - `pnpm lint` - ESLint code quality checks
+- `pnpm typecheck` - TypeScript type checking
+- `pnpm test` - Run unit tests with Vitest
 - `pnpm preview` - Preview production build
-- `pnpm generate-pwa-icons` - Generate PWA icon assets
+- `pnpm generate-pwa-icons` - Generate PWA icon assets (only for app package)
+- `pnpm tunnel` - Start cloudflare tunnel for local development (only for app package)
+- `pnpm dlx shadcn@latest add [component]` - Add Shadcn component to the package
 
-### Chrome Extension (packages/extension/)
-- `pnpm dev` - Start extension development with hot reload
-- `pnpm build` - Build extension for production/distribution
-- `pnpm lint` - ESLint validation
-- `pnpm preview` - Preview built extension
+Always run `lint`, `typecheck`, and `test` after finishing a feature or before committing.
 
 ## Key Implementation Details
 
@@ -88,8 +109,12 @@ The codebase is transitioning from legacy implementations (app/, extension/) to 
 
 ### Code Organization
 
-inside bigger packages e.g. packages/app organize code into features 
-the general rule is all the code that is fetched externallly or depends on the storage should be in the `src/features/{feature-name}` folder, `src/components` should be used for shared components that are used across features. Avoid excessive nesting of folders, generally feature folder can be flat, but if there are many files, it's ok to nest them.
+Inside bigger packages (e.g. packages/app), organize code into features:
+- Code that fetches externally or depends on storage: `src/features/{feature-name}/` folder
+- Shared components used across features: `src/components/` folder
+- Avoid excessive nesting - feature folders can be flat, but nesting is ok if there are many files
+- Shared type definitions: `packages/core/src/types/`
+
 ```
 packages/app/src/features
 └── articles
@@ -98,3 +123,7 @@ packages/app/src/features
     ├── repo.ts
     └── types.ts
 ```
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
