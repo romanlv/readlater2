@@ -41,7 +41,7 @@ function App() {
 
   const handleSaveSharedArticle = () => {
     if (!sharedData?.url) return;
-    
+
     const articleData: ArticleData = {
       url: sharedData.url,
       title: sharedData.title || sharedData.url,
@@ -55,6 +55,9 @@ function App() {
       favorite: false,
     };
 
+    console.log('✅ Shared article saved to local state');
+
+    // Set as pending article to show in list
     setPendingArticle(articleData);
     setShowShareTarget(false);
     setSharedData(null);
@@ -72,7 +75,7 @@ function App() {
   if (showShareTarget) {
     return (
       <>
-        <ShareTargetDisplay 
+        <ShareTargetDisplay
           sharedData={sharedData}
           onSaveArticle={handleSaveSharedArticle}
           onViewArticles={handleViewArticles}

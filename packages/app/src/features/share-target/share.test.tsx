@@ -140,7 +140,7 @@ describe('Share Target Feature', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Read It Later 2.0a')).not.toBeNull();
+    expect(await screen.findByText('Read It Later 2.0b')).not.toBeNull();
   });
 
   test('correctly decodes URL parameters', async () => {

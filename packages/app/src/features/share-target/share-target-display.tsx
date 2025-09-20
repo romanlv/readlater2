@@ -74,8 +74,8 @@ export function ShareTargetDisplay({ sharedData, onSaveArticle, onViewArticles }
           
           <div className="flex gap-2 pt-4 border-t">
             {decodedUrl && (
-              <Button 
-                onClick={onSaveArticle} 
+              <Button
+                onClick={onSaveArticle}
                 className="flex-1"
               >
                 Save Article

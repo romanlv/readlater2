@@ -63,6 +63,45 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
     }
   }
 
+  async saveArticles(articles: ArticleData[]): Promise<SyncResult[]> {
+    try {
+      console.log(`Batch saving ${articles.length} articles...`);
+      const token = await this.manager['authProvider'].getAuthToken();
+      const spreadsheetId = await this.manager.getOrCreateSpreadsheet();
+
+      const results: SyncResult[] = [];
+
+      for (const article of articles) {
+        try {
+          const rowData = articleToSheetRow(article);
+          await this.manager.appendRow(token, spreadsheetId, rowData);
+          results.push({
+            success: true,
+            articleUrl: article.url
+          });
+        } catch (error) {
+          console.error(`Error saving article ${article.url}:`, error);
+          results.push({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            articleUrl: article.url
+          });
+        }
+      }
+
+      console.log(`Batch save completed: ${results.filter(r => r.success).length}/${articles.length} successful`);
+      return results;
+    } catch (error) {
+      console.error('Error in batch save:', error);
+      // Return failed results for all articles
+      return articles.map(article => ({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        articleUrl: article.url
+      }));
+    }
+  }
+
   async deleteArticle(_url: string): Promise<SyncResult> {
     throw new Error('deleteArticle not implemented yet');
   }

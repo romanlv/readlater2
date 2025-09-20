@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArticleData, GoogleSheetsConfig } from './types';
 import { 
@@ -21,6 +21,7 @@ export function ArticleList({ config, pendingArticle }: ArticleListProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authProvider, setAuthProvider] = useState<PwaAuthProvider | null>(null);
+  const processedArticleRef = useRef<string | null>(null);
 
   useEffect(() => {
     initializeGoogleSheetsSync(config);
@@ -72,10 +73,20 @@ export function ArticleList({ config, pendingArticle }: ArticleListProps) {
   }, [authProvider, handleLoad]);
 
   useEffect(() => {
-    if (pendingArticle) {
-      setArticles(prev => [pendingArticle, ...prev]);
+    if (pendingArticle && processedArticleRef.current !== pendingArticle.url) {
+      console.log('Processing pending article:', pendingArticle.url);
+      processedArticleRef.current = pendingArticle.url;
+
+      // Check if article already exists to prevent duplicates
+      const articleExists = articles.some(article => article.url === pendingArticle.url);
+      if (!articleExists) {
+        console.log('Adding pending article to list');
+        setArticles(prev => [pendingArticle, ...prev]);
+      } else {
+        console.log('Article already exists, skipping');
+      }
     }
-  }, [pendingArticle]);
+  }, [pendingArticle, articles]);
 
   const addArticle = () => {
     const url = urlInput.trim();
