@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react"
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ArticleList } from "@/features/articles/article-list"
 import { config } from "./config"
 import { ShareTargetDisplay } from "@/features/share-target/share-target-display"
 import { ArticleData } from "@/features/articles/types"
 import PWABadge from "./PWABadge"
 import { DebugPanel } from "@/components/debug-panel"
+import { queryClient } from "@/lib/query-client"
 
 interface SharedData {
   title?: string;
@@ -74,7 +77,7 @@ function App() {
 
   if (showShareTarget) {
     return (
-      <>
+      <QueryClientProvider client={queryClient}>
         <ShareTargetDisplay
           sharedData={sharedData}
           onSaveArticle={handleSaveSharedArticle}
@@ -82,16 +85,18 @@ function App() {
         />
         <PWABadge />
         <DebugPanel />
-      </>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     );
   }
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <ArticleList config={config} pendingArticle={pendingArticle} />
       <PWABadge />
       <DebugPanel />
-    </>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }
 

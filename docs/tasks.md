@@ -1,21 +1,21 @@
 
 ## Tasks
 
-### Phase 1: Offline Storage Foundation
-- [ ] Set up IndexedDB schema with Dexie.js (Article, SyncOperation tables)
-- [ ] Create basic ArticleRepository with CRUD operations
-- [ ] Set up React Query + QueryClient infrastructure
-- [ ] Add required dependencies (@tanstack/react-query, dexie)
+### Phase 1: Offline Storage Foundation ✅ COMPLETED
+- [x] Set up IndexedDB schema with Dexie.js (Article, SyncOperation tables)
+- [x] Create basic ArticleRepository with CRUD operations
+- [x] Set up React Query + QueryClient infrastructure
+- [x] Add required dependencies (@tanstack/react-query, dexie)
 
 ### Phase 2: Local-First CRUD Operations
-- [ ] Implement local article save/get/update/delete in repository
-- [ ] Create useArticles hook with React Query integration
+- [x] Implement local article save/get/update/delete in repository
+- [x] Create useArticles hook with React Query integration
 - [ ] Update article list UI to read from IndexedDB instead of Google Sheets
-- [ ] Add optimistic updates for instant UI feedback
+- [x] Add optimistic updates for instant UI feedback
 - [ ] Basic offline article viewing (no sync yet)
 
 ### Phase 3: Manual Sync Foundation
-- [ ] Implement sync queue in IndexedDB (pending operations)
+- [x] Implement sync queue in IndexedDB (pending operations)
 - [ ] Create SyncService with manual sync to Google Sheets
 - [ ] Add "Sync Now" button to manually trigger sync
 - [ ] Show sync status (pending/syncing/synced) in UI
@@ -29,11 +29,13 @@
 - [ ] Bulk sync operations for efficiency
 
 ### Phase 5: Advanced Offline Features
-- [ ] Cursor-based pagination for large datasets
-- [ ] Local search with relevance scoring
-- [ ] Advanced filtering (tags, domain, archived, favorite)
+- [x] Cursor-based pagination for large datasets
+- [ ] load more functionality on UI
+- [x] Local search with relevance scoring
+- [x] Advanced filtering (tags, domain, archived, favorite)
 - [ ] Sync progress indicators and pending change counts
-- [ ] Performance optimizations (caching, indexing)
+- [ ] integrate filtering on UI
+- [x] Performance optimizations (caching, indexing)
 
 ### Phase 6: Service Worker Integration (Future)
 - [ ] Background Sync API integration
@@ -44,5 +46,5 @@
 - [ ] multiple spaces/sheets
 - [ ] dark mode
 - [ ] prod deployment
-- [ ] delete articles (✓ will be included in Phase 2)
-- [ ] update notes (✓ will be included in Phase 2)
+- [x] delete articles (✓ implemented in Phase 1)
+- [x] update notes (✓ implemented in Phase 1)
