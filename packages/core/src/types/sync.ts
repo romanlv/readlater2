@@ -11,6 +11,7 @@ export interface SyncEngine {
   getArticles?(): Promise<ArticleData[]>;
   deleteArticle?(url: string): Promise<SyncResult>;
   updateArticle?(url: string, updates: Partial<ArticleData>): Promise<SyncResult>;
+  syncWithConflictResolution?(localArticles: ArticleData[]): Promise<SyncResult[]>;
 }
 
 export interface AuthProvider {

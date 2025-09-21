@@ -9,6 +9,7 @@ export interface ArticleData {
   notes?: string;
   archived?: boolean;
   favorite?: boolean;
+  editedAt?: string;
 }
 
 export interface SaveArticleMessage {
