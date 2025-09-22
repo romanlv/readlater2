@@ -57,7 +57,7 @@ export function DebugPanel() {
       
       setSwInfo({
         isSupported: true,
-        registration,
+        registration: registration || null,
         isRegistered: !!registration,
         isActivated: !!(registration?.active),
         scope: registration?.scope || '',

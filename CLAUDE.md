@@ -127,3 +127,4 @@ packages/app/src/features
 Do what has been asked; nothing more, nothing less.
 prefer editing an existing file to creating a new one.
 NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+- packages/app/src/components/ui/ should be used only for shared components

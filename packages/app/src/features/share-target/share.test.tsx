@@ -3,6 +3,30 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '@/App';
 
+// Mock the article hooks
+vi.mock('@/features/articles/hooks', () => ({
+  useAddArticle: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
+  usePaginatedArticles: vi.fn(() => ({
+    data: { pages: [{ items: [] }] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetching: false,
+    isLoading: false,
+    error: null,
+  })),
+  useUpdateArticle: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
+  useDeleteArticle: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
+}));
+
 // Mock the google-sheets module
 vi.mock('@/features/articles/google-sheets', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, unknown>;
@@ -63,11 +87,11 @@ describe('Share Target Feature', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Shared Content')).not.toBeNull();
-    expect(screen.getByText('Content received via Web Share Target')).not.toBeNull();
-    expect(screen.getByText('Test Article')).not.toBeNull();
-    expect(screen.getByText('Test description')).not.toBeNull();
-    expect(screen.getByText('https://example.com')).not.toBeNull();
+    // Should now show the edit form directly with the title "Save Article"
+    expect(await screen.findByText('Save Article', { selector: '[data-slot="card-title"]' })).not.toBeNull();
+    expect(screen.getByDisplayValue('Test Article')).not.toBeNull();
+    expect(screen.getByDisplayValue('https://example.com')).not.toBeNull();
+    expect(screen.getByDisplayValue('Test description')).not.toBeNull();
   });
 
   test('renders ShareTargetDisplay with no data when share_target=1 but no hash params', async () => {
@@ -82,8 +106,9 @@ describe('Share Target Feature', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Shared Content')).not.toBeNull();
-    expect(screen.getByText('No share data received.')).not.toBeNull();
+    // Should show the edit form with empty fields
+    expect(await screen.findByText('Save Article', { selector: '[data-slot="card-title"]' })).not.toBeNull();
+    expect(screen.getByDisplayValue('')).not.toBeNull(); // Empty URL field
   });
 
   test('handles Save Article button click', async () => {
@@ -102,9 +127,10 @@ describe('Share Target Feature', () => {
     const saveButton = await screen.findByText('Save Article');
     await user.click(saveButton);
 
-    await waitFor(() => {
-      expect(window.history.replaceState).toHaveBeenCalledWith({}, '', '/');
-    });
+    // Should now show the edit form instead of immediately saving
+    expect(await screen.findByText('Save Article', { selector: '[data-slot="card-title"]' })).not.toBeNull();
+    expect(screen.getByDisplayValue('Test Article')).not.toBeNull();
+    expect(screen.getByDisplayValue('https://example.com')).not.toBeNull();
   });
 
   test('handles View All Articles button click', async () => {
@@ -159,9 +185,10 @@ describe('Share Target Feature', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Test Article with Special Characters!')).not.toBeNull();
-    expect(screen.getByText('Description with "quotes" and symbols')).not.toBeNull();
-    expect(screen.getByText('https://example.com/article?id=123&ref=test')).not.toBeNull();
+    // Should show the edit form with decoded values in the form fields
+    expect(await screen.findByDisplayValue('Test Article with Special Characters!')).not.toBeNull();
+    expect(screen.getByDisplayValue('Description with "quotes" and symbols')).not.toBeNull();
+    expect(screen.getByDisplayValue('https://example.com/article?id=123&ref=test')).not.toBeNull();
   });
 
   test('handles URL-only share target', async () => {
@@ -176,8 +203,8 @@ describe('Share Target Feature', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Shared Content')).not.toBeNull();
-    expect(screen.getByText('https://example.com/article')).not.toBeNull();
-    expect(screen.getByText('Save Article')).not.toBeNull();
+    // Should show the edit form with the URL pre-filled
+    expect(await screen.findByText('Save Article', { selector: '[data-slot="card-title"]' })).not.toBeNull();
+    expect(screen.getByDisplayValue('https://example.com/article')).not.toBeNull();
   });
 });

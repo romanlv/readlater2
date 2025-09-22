@@ -2,9 +2,9 @@ import { useState, useEffect } from "react"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ArticleList } from "@/features/articles/article-list"
-import { config } from "./config"
 import { ShareTargetDisplay } from "@/features/share-target/share-target-display"
-import { ArticleData } from "@/features/articles/types"
+import { useAddArticle } from "@/features/articles/hooks"
+import { ArticleFormData } from "@/features/articles/article-edit-form"
 import PWABadge from "./PWABadge"
 import { DebugPanel } from "@/components/debug-panel"
 import { queryClient } from "@/lib/query-client"
@@ -15,10 +15,10 @@ interface SharedData {
   url?: string;
 }
 
-function App() {
+function AppContent() {
   const [sharedData, setSharedData] = useState<SharedData | null>(null);
   const [showShareTarget, setShowShareTarget] = useState(false);
-  const [pendingArticle, setPendingArticle] = useState<ArticleData | null>(null);
+  const addArticleMutation = useAddArticle();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -42,26 +42,25 @@ function App() {
     }
   }, []);
 
-  const handleSaveSharedArticle = () => {
-    if (!sharedData?.url) return;
-
-    const articleData: ArticleData = {
-      url: sharedData.url,
-      title: sharedData.title || sharedData.url,
-      description: sharedData.text || '',
+  const handleSaveSharedArticle = (formData: ArticleFormData) => {
+    const article = {
+      url: formData.url,
+      title: formData.title,
+      description: formData.description,
       featuredImage: '',
-      timestamp: new Date().toISOString(),
-      domain: new URL(sharedData.url).hostname,
-      tags: [],
-      notes: '',
+      timestamp: Date.now(),
+      domain: new URL(formData.url).hostname,
+      tags: formData.tags,
+      notes: formData.notes,
       archived: false,
       favorite: false,
+      syncStatus: 'pending' as const
     };
 
-    console.log('✅ Shared article saved to local state');
+    console.log('✅ Saving shared article with form data via mutation');
 
-    // Set as pending article to show in list
-    setPendingArticle(articleData);
+    // Save article directly using React Query mutation
+    addArticleMutation.mutate(article);
     setShowShareTarget(false);
     setSharedData(null);
     // Clear the URL params to show normal article list
@@ -77,25 +76,34 @@ function App() {
 
   if (showShareTarget) {
     return (
-      <QueryClientProvider client={queryClient}>
+      <>
         <ShareTargetDisplay
           sharedData={sharedData}
           onSaveArticle={handleSaveSharedArticle}
           onViewArticles={handleViewArticles}
+          isLoading={addArticleMutation.isPending}
         />
         <PWABadge />
         <DebugPanel />
         <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
+      </>
     );
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ArticleList config={config} pendingArticle={pendingArticle} />
+    <>
+      <ArticleList />
       <PWABadge />
       <DebugPanel />
       <ReactQueryDevtools initialIsOpen={false} />
+    </>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
     </QueryClientProvider>
   );
 }

@@ -71,7 +71,7 @@ export function useAddArticle() {
 
       return { previousArticles };
     },
-    onError: (err, newArticle, context) => {
+    onError: (_err, _newArticle, context) => {
       // Rollback on error
       queryClient.setQueryData(['articles'], context?.previousArticles);
     },
@@ -88,36 +88,8 @@ export function useUpdateArticle() {
   return useMutation({
     mutationFn: ({ url, updates }: { url: string; updates: Partial<Article> }) =>
       articleRepository.update(url, updates),
-    onMutate: async ({ url, updates }) => {
-      // Cancel queries
-      await queryClient.cancelQueries({ queryKey: ['articles'] });
-      await queryClient.cancelQueries({ queryKey: ['articles', url] });
-
-      // Optimistic update for individual article
-      queryClient.setQueryData(['articles', url], (old: Article | undefined) =>
-        old ? { ...old, ...updates, editedAt: Date.now() } : old
-      );
-
-      // Optimistic update for lists
-      queryClient.setQueriesData({ queryKey: ['articles'] }, (old: InfiniteData<PaginatedResult<Article>> | undefined) => {
-        if (!old?.pages) return old;
-
-        return {
-          ...old,
-          pages: old.pages.map((page: PaginatedResult<Article>) => ({
-            ...page,
-            items: page.items.map((article: Article) =>
-              article.url === url
-                ? { ...article, ...updates, editedAt: Date.now() }
-                : article
-            )
-          }))
-        };
-      });
-    },
-    onSettled: (data, error, { url }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
-      queryClient.invalidateQueries({ queryKey: ['articles', url] });
     },
   });
 }

@@ -1,6 +1,9 @@
 import Dexie from 'dexie';
 import { db, Article, SyncOperation, PaginationCursor, PaginatedResult } from '../../lib/db.js';
 
+// Re-export types for external use
+export type { PaginationCursor, PaginatedResult } from '../../lib/db.js';
+
 export interface ArticleFilters {
   archived?: boolean;
   favorite?: boolean;
