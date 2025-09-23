@@ -6,9 +6,11 @@ import react from '@vitejs/plugin-react'
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 
+const basePath = process.env.VITE_BASE_PATH || '/readlater2/'
+
 // https://vitejs.dev/config/
 export default mergeConfig(defineConfig({
-  base: process.env.VITE_BASE_PATH || '/',
+  base: basePath,
   plugins: [react(), tailwindcss(), VitePWA({
     strategies: 'injectManifest',
     srcDir: 'src',
@@ -96,5 +98,6 @@ export default mergeConfig(defineConfig({
   define: {
     'import.meta.env.DEV': true, // Ensure DEV is properly defined for the service worker
     'import.meta.env.VITE_BUILD_SHA': JSON.stringify(process.env.VITE_BUILD_SHA || process.env.GITHUB_SHA?.slice(0, 7) || undefined),
+    'import.meta.env.BASE_PATH': JSON.stringify(basePath)
   },
 }), vitestConfig)

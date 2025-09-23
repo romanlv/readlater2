@@ -72,7 +72,7 @@ export function DebugPanel() {
 
   const testShareTarget = async () => {
     try {
-      const response = await fetch('/', {
+      const response = await fetch(import.meta.env.BASE_PATH, {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',

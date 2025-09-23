@@ -35,11 +35,11 @@ self.addEventListener('fetch', (event) => {
     swLog('Fetch event:', event.request.method, event.request.url);
   }
 
-  // Handle Web Share Target POST - be more specific about matching
-  // Get the base path from the service worker's own location
-  const swUrl = new URL(self.location.href);
-  const basePath = swUrl.pathname.replace('/sw.js', '') || '/';
-  const isShareTarget = event.request.method === 'POST' && url.pathname === basePath;
+  // Handle Web Share Target POST - use consistent BASE_PATH
+  const basePath = import.meta.env.BASE_PATH || '/';
+  // Handle both with and without trailing slash
+  const isShareTarget = event.request.method === 'POST' &&
+    (url.pathname === basePath || url.pathname === basePath.slice(0, -1));
   if (isShareTarget) {
     swLog('✅ Web Share Target POST detected!');
     swLog('Request URL:', event.request.url);
