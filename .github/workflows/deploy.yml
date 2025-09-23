@@ -35,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: build libs
+        run: pnpm build:libs
+
       - name: Run type checking
         run: pnpm typecheck
 
@@ -44,8 +47,8 @@ jobs:
       - name: Run tests
         run: pnpm test
 
-      - name: Build packages
-        run: pnpm build
+      - name: Build app
+        run: pnpm app build
         env:
           NODE_ENV: production
           VITE_BASE_PATH: /readlater2/
