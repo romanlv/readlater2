@@ -28,6 +28,7 @@ const mockSelf = {
   __WB_MANIFEST: [],
   location: {
     origin: 'https://example.com',
+    href: 'https://example.com/sw.js',
   },
 };
 

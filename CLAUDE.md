@@ -62,7 +62,7 @@ use `context7` mcp to get up to date documentation and code examples for the lib
 - `pnpm lint` - Run ESLint across all packages
 - `pnpm test` - Run tests across all packages
 - `pnpm typecheck` - Run TypeScript checking across all packages
-- `pnpm app [command]` - Run commands for app package specifically
+- `pnpm app [command]` - Run commands for app package specifically e.g. `pnpm app test`
 - `pnpm ext [command]` - Run commands for extension package specifically
 
 ### Package level (packages/{package-name}/)
