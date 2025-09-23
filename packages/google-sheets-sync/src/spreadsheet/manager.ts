@@ -150,7 +150,7 @@ export class GoogleSpreadsheetManager {
   private async addHeaders(token: string, spreadsheetId: string): Promise<void> {
     const body = { values: [SPREADSHEET_HEADERS] };
     await this._fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:J1?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:K1?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -170,7 +170,7 @@ export class GoogleSpreadsheetManager {
 
   async getAllRows(token: string, spreadsheetId: string): Promise<string[][]> {
     const result = await this._fetch<GoogleValueRange>(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A2:J`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A2:K`,
       { headers: { 'Authorization': `Bearer ${token}` } }
     );
     return result.values || [];
@@ -178,10 +178,54 @@ export class GoogleSpreadsheetManager {
 
   async appendRow(token: string, spreadsheetId: string, values: string[]): Promise<void> {
     const nextRow = await this.getNextRowNumber(token, spreadsheetId);
-    
+
     const body = { values: [values] };
     await this._fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${nextRow}:J${nextRow}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${nextRow}:K${nextRow}?valueInputOption=USER_ENTERED`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      }
+    );
+  }
+
+  async findRowByUrl(token: string, spreadsheetId: string, url: string): Promise<number | null> {
+    const rows = await this.getAllRows(token, spreadsheetId);
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i][0] === url) {
+        return i + 2; // +2 because rows are 0-indexed but sheets are 1-indexed and we start from row 2 (skip header)
+      }
+    }
+    return null;
+  }
+
+  async deleteRow(token: string, spreadsheetId: string, rowNumber: number): Promise<void> {
+    const request = {
+      deleteDimension: {
+        range: {
+          sheetId: 0, // Sheet1 has sheetId 0
+          dimension: 'ROWS',
+          startIndex: rowNumber - 1, // Convert to 0-indexed
+          endIndex: rowNumber // End index is exclusive
+        }
+      }
+    };
+
+    await this._fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requests: [request] })
+      }
+    );
+  }
+
+  async updateRow(token: string, spreadsheetId: string, rowNumber: number, values: string[]): Promise<void> {
+    const body = { values: [values] };
+    await this._fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${rowNumber}:K${rowNumber}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },

@@ -102,11 +102,80 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
     }
   }
 
-  async deleteArticle(_url: string): Promise<SyncResult> {
-    throw new Error('deleteArticle not implemented yet');
+  async deleteArticle(url: string): Promise<SyncResult> {
+    try {
+      console.log(`Deleting article: ${url}`);
+      const token = await this.manager['authProvider'].getAuthToken();
+      const spreadsheetId = await this.manager.getOrCreateSpreadsheet();
+
+      const rowNumber = await this.manager.findRowByUrl(token, spreadsheetId, url);
+      if (rowNumber === null) {
+        console.log(`Article not found in spreadsheet: ${url}`);
+        return {
+          success: true, // Consider it success if already not present
+          articleUrl: url
+        };
+      }
+
+      await this.manager.deleteRow(token, spreadsheetId, rowNumber);
+      console.log(`Successfully deleted article from Google Sheets: ${url}`);
+
+      return {
+        success: true,
+        articleUrl: url
+      };
+    } catch (error) {
+      console.error(`Error deleting article ${url}:`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        articleUrl: url
+      };
+    }
   }
 
-  async updateArticle(_url: string, _updates: Partial<ArticleData>): Promise<SyncResult> {
-    throw new Error('updateArticle not implemented yet');
+  async updateArticle(url: string, updates: Partial<ArticleData>): Promise<SyncResult> {
+    try {
+      console.log(`Updating article: ${url}`);
+      const token = await this.manager['authProvider'].getAuthToken();
+      const spreadsheetId = await this.manager.getOrCreateSpreadsheet();
+
+      const rowNumber = await this.manager.findRowByUrl(token, spreadsheetId, url);
+      if (rowNumber === null) {
+        console.log(`Article not found in spreadsheet, cannot update: ${url}`);
+        return {
+          success: false,
+          error: 'Article not found in spreadsheet',
+          articleUrl: url
+        };
+      }
+
+      // Get current article data and merge with updates
+      const rows = await this.manager.getAllRows(token, spreadsheetId);
+      const currentRow = rows[rowNumber - 2]; // Convert back to 0-indexed array
+      const currentArticle = sheetRowToArticle(currentRow);
+
+      const updatedArticle: ArticleData = {
+        ...currentArticle,
+        ...updates,
+        url // Ensure URL doesn't get overwritten
+      };
+
+      const rowData = articleToSheetRow(updatedArticle);
+      await this.manager.updateRow(token, spreadsheetId, rowNumber, rowData);
+
+      console.log(`Successfully updated article in Google Sheets: ${url}`);
+      return {
+        success: true,
+        articleUrl: url
+      };
+    } catch (error) {
+      console.error(`Error updating article ${url}:`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        articleUrl: url
+      };
+    }
   }
 }

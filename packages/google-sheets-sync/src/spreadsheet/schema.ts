@@ -2,7 +2,7 @@ import { ArticleData } from '@readlater/core';
 
 export const SPREADSHEET_HEADERS = [
   'URL',
-  'Title', 
+  'Title',
   'Tags',
   'Notes',
   'Description',
@@ -10,7 +10,8 @@ export const SPREADSHEET_HEADERS = [
   'Timestamp',
   'Domain',
   'Archived',
-  'Favorite'
+  'Favorite',
+  'Edited At'
 ] as const;
 
 export function articleToSheetRow(article: ArticleData): string[] {
@@ -24,7 +25,8 @@ export function articleToSheetRow(article: ArticleData): string[] {
     article.timestamp || '',
     article.domain || '',
     article.archived ? '1' : '',
-    article.favorite ? '1' : ''
+    article.favorite ? '1' : '',
+    article.editedAt || ''
   ];
 }
 
@@ -39,6 +41,7 @@ export function sheetRowToArticle(row: string[]): ArticleData {
     timestamp: row[6] || '',
     domain: row[7] || '',
     archived: row[8] === '1',
-    favorite: row[9] === '1'
+    favorite: row[9] === '1',
+    editedAt: row[10] || undefined
   };
 }

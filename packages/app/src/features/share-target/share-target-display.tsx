@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ArticleEditForm, ArticleFormData } from '@/features/articles/article-edit-form';
 
 interface SharedData {
   title?: string;
@@ -9,11 +10,12 @@ interface SharedData {
 
 interface ShareTargetDisplayProps {
   sharedData: SharedData | null;
-  onSaveArticle: () => void;
+  onSaveArticle: (formData: ArticleFormData) => void;
   onViewArticles: () => void;
+  isLoading?: boolean;
 }
 
-export function ShareTargetDisplay({ sharedData, onSaveArticle, onViewArticles }: ShareTargetDisplayProps) {
+export function ShareTargetDisplay({ sharedData, onSaveArticle, onViewArticles, isLoading }: ShareTargetDisplayProps) {
   if (!sharedData) {
     return (
       <div className="container max-w-2xl mx-auto p-4">
@@ -37,60 +39,22 @@ export function ShareTargetDisplay({ sharedData, onSaveArticle, onViewArticles }
   const decodedText = sharedData.text ? decodeURIComponent(sharedData.text) : '';
   const decodedUrl = sharedData.url ? decodeURIComponent(sharedData.url) : '';
 
+  // Always show the edit form when there's shared data
   return (
     <div className="container max-w-2xl mx-auto p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Shared Content</CardTitle>
-          <CardDescription>Content received via Web Share Target</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {decodedTitle && (
-            <div>
-              <strong>Title:</strong> {decodedTitle}
-            </div>
-          )}
-          {decodedText && (
-            <div>
-              <strong>Text:</strong> {decodedText}
-            </div>
-          )}
-          {decodedUrl && (
-            <div>
-              <strong>URL:</strong>{' '}
-              <a 
-                href={decodedUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                {decodedUrl}
-              </a>
-            </div>
-          )}
-          {!decodedTitle && !decodedText && !decodedUrl && (
-            <p>No share data received.</p>
-          )}
-          
-          <div className="flex gap-2 pt-4 border-t">
-            {decodedUrl && (
-              <Button
-                onClick={onSaveArticle}
-                className="flex-1"
-              >
-                Save Article
-              </Button>
-            )}
-            <Button 
-              onClick={onViewArticles} 
-              variant="outline"
-              className="flex-1"
-            >
-              View All Articles
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ArticleEditForm
+        initialData={{
+          url: decodedUrl,
+          title: decodedTitle || decodedUrl || '',
+          description: decodedText || '',
+          notes: '',
+          tags: []
+        }}
+        onSave={onSaveArticle}
+        onCancel={onViewArticles}
+        isLoading={isLoading}
+        mode="create"
+      />
     </div>
   );
 }
