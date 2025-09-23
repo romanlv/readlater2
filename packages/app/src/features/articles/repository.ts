@@ -224,6 +224,8 @@ export class ArticleRepository {
   }
 
   async save(article: Article): Promise<void> {
+    const existingArticle = await this.getByUrl(article.url);
+
     const articleToSave: Article = {
       ...article,
       syncStatus: 'pending'
@@ -232,7 +234,10 @@ export class ArticleRepository {
 
     await this.db.transaction('rw', [this.db.articles, this.db.syncQueue], async () => {
       await this.db.articles.put(articleToSave);
-      await this.queueSync('create', article.url, articleToSave);
+
+      // Queue appropriate operation type based on whether article exists
+      const operationType = existingArticle ? 'update' : 'create';
+      await this.queueSync(operationType, article.url, articleToSave);
     });
 
     // Clear count cache when adding items
@@ -264,6 +269,12 @@ export class ArticleRepository {
       await this.queueSync('delete', url, {});
     });
 
+    this.countCache.clear();
+  }
+
+  // Delete locally without queueing sync operation (for cleaning up after remote sync)
+  async deleteLocalOnly(url: string): Promise<void> {
+    await this.db.articles.delete(url);
     this.countCache.clear();
   }
 
@@ -299,6 +310,43 @@ export class ArticleRepository {
       .equals(domain)
       .reverse()
       .sortBy('timestamp');
+  }
+
+  // Sync queue operations
+  async getPendingSyncOperations(): Promise<SyncOperation[]> {
+    return await this.db.syncQueue
+      .orderBy('timestamp')
+      .toArray();
+  }
+
+  async removeSyncOperation(id: string): Promise<void> {
+    await this.db.syncQueue.delete(id);
+  }
+
+  async incrementSyncRetryCount(id: string): Promise<void> {
+    const operation = await this.db.syncQueue.get(id);
+    if (operation) {
+      await this.db.syncQueue.put({
+        ...operation,
+        retryCount: operation.retryCount + 1
+      });
+    }
+  }
+
+  async clearSyncQueue(): Promise<void> {
+    await this.db.syncQueue.clear();
+  }
+
+  async getPendingArticlesCount(): Promise<number> {
+    return await this.db.articles
+      .where('syncStatus')
+      .equals('pending')
+      .count();
+  }
+
+  // Get all articles (for sync operations that need to check everything)
+  async getAllArticles(): Promise<Article[]> {
+    return await this.db.articles.toArray();
   }
 }
 

@@ -4,7 +4,9 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArticleEditForm, ArticleFormData } from './article-edit-form';
 import { usePaginatedArticles, useAddArticle, useUpdateArticle, useDeleteArticle } from './hooks';
 import { Article } from '@/lib/db';
-import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, CheckCircle } from 'lucide-react';
+import { SyncStatus } from './sync-status';
+import { config } from '@/config';
+import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone } from 'lucide-react';
 
 // Hook to track online/offline status
 function useOnlineStatus() {
@@ -44,8 +46,6 @@ export function ArticleList() {
   // Flatten paginated results
   const articles = data?.pages.flatMap(page => page.items) || [];
 
-  // Count pending sync items
-  const pendingSyncCount = articles.filter(article => article.syncStatus === 'pending').length;
 
 
 
@@ -176,25 +176,7 @@ export function ArticleList() {
             <div className="text-gray-600">
               {articles.length} articles • Offline ready
             </div>
-            <div className="flex items-center gap-2">
-              {!isOnline && (
-                <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs flex items-center gap-1">
-                  <Smartphone className="w-3 h-3" />
-                  Offline
-                </span>
-              )}
-              {pendingSyncCount > 0 && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                  {pendingSyncCount} pending sync
-                </span>
-              )}
-              {isOnline && pendingSyncCount === 0 && (
-                <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" />
-                  Synced
-                </span>
-              )}
-            </div>
+            <SyncStatus config={config} isOnline={isOnline} />
           </div>
 
           <ul className="mb-4 space-y-2">

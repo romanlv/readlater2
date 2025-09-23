@@ -5,6 +5,8 @@ import { ArticleList } from "@/features/articles/article-list"
 import { ShareTargetDisplay } from "@/features/share-target/share-target-display"
 import { useAddArticle } from "@/features/articles/hooks"
 import { ArticleFormData } from "@/features/articles/article-edit-form"
+import { syncService } from "@/features/articles/sync-service"
+import { config } from "@/config"
 import PWABadge from "./PWABadge"
 import { DebugPanel } from "@/components/debug-panel"
 import { queryClient } from "@/lib/query-client"
@@ -21,6 +23,9 @@ function AppContent() {
   const addArticleMutation = useAddArticle();
 
   useEffect(() => {
+    // Configure sync service
+    syncService.configure(config);
+
     const urlParams = new URLSearchParams(window.location.search);
     const isShareTarget = urlParams.get('share_target') === '1';
 
@@ -39,6 +44,12 @@ function AppContent() {
 
       setSharedData({ title, text, url });
       setShowShareTarget(true);
+    } else {
+      // Check for authentication redirect
+      if (window.location.hash.includes('access_token')) {
+        console.log('🔐 Authentication redirect detected');
+        syncService.authenticate();
+      }
     }
   }, []);
 
