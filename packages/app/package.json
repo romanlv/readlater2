@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "VITE_BASE_PATH=/readlater2/ vite",
     "tunnel": "dotenv -e .env -- sh -c 'cloudflared tunnel run --token $CLOUDFLARED_TOKEN'",
     "typecheck": "tsc --noEmit",
     "build": "tsc -b && vite build",

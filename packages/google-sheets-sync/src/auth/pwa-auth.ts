@@ -85,7 +85,7 @@ export class PwaAuthProvider implements AuthProvider {
     
     const params = {
       client_id: this.config.clientId,
-      redirect_uri: window.location.origin,
+      redirect_uri: window.location.origin + window.location.pathname,
       response_type: 'token',
       scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata',
       include_granted_scopes: 'true',
