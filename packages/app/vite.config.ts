@@ -95,5 +95,6 @@ export default mergeConfig(defineConfig({
   },
   define: {
     'import.meta.env.DEV': true, // Ensure DEV is properly defined for the service worker
+    'import.meta.env.VITE_BUILD_SHA': JSON.stringify(process.env.VITE_BUILD_SHA || process.env.GITHUB_SHA?.slice(0, 7) || undefined),
   },
 }), vitestConfig)

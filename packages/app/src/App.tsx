@@ -9,6 +9,7 @@ import { syncService } from "@/features/articles/sync-service"
 import { config } from "@/config"
 import PWABadge from "./PWABadge"
 import { DebugPanel } from "@/components/debug-panel"
+import { BuildInfo } from "@/components/build-info"
 import { queryClient } from "@/lib/query-client"
 
 interface SharedData {
@@ -96,6 +97,7 @@ function AppContent() {
         />
         <PWABadge />
         <DebugPanel />
+        <BuildInfo className="fixed bottom-2 left-1/2 transform -translate-x-1/2" />
         <ReactQueryDevtools initialIsOpen={false} />
       </>
     );
@@ -106,6 +108,7 @@ function AppContent() {
       <ArticleList />
       <PWABadge />
       <DebugPanel />
+      <BuildInfo className="fixed bottom-2 left-1/2 transform -translate-x-1/2" />
       <ReactQueryDevtools initialIsOpen={false} />
     </>
   );
