@@ -4,23 +4,6 @@ import userEvent from '@testing-library/user-event'
 import Popup from './popup'
 import type { ArticleData, SaveArticleResponse } from '@readlater/core'
 
-// Test utilities
-const expectElementToExist = (element: Element | null) => {
-  expect(element).not.toBeNull()
-}
-
-const findByTextContent = (text: string) => {
-  return screen.queryByText(text)
-}
-
-const findByRole = (role: string, options?: { name?: RegExp | string }) => {
-  return screen.queryByRole(role, options)
-}
-
-const findByLabelText = (text: string) => {
-  return screen.queryByLabelText(text)
-}
-
 // Mock Chrome APIs
 const mockChrome = {
   tabs: {
@@ -66,25 +49,25 @@ describe('Popup Rendering', () => {
 
     // Wait for page data to load
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Test Article Title'))
+      expect(screen.queryByText('Test Article Title')).toBeTruthy()
     })
 
     // Check essential elements exist without full DOM assertion
-    expectElementToExist(findByTextContent('ReadLater'))
-    expectElementToExist(findByTextContent('https://example.com/article'))
-    expectElementToExist(findByLabelText('Tags (comma-separated)'))
-    expectElementToExist(findByLabelText('Notes'))
-    expectElementToExist(findByRole('button', { name: /save article/i }))
-    expectElementToExist(findByRole('button', { name: /cancel/i }))
+    expect(screen.queryByText('ReadLater')).toBeTruthy()
+    expect(screen.queryByText('https://example.com/article')).toBeTruthy()
+    expect(screen.queryByLabelText('Tags (comma-separated)')).toBeTruthy()
+    expect(screen.queryByLabelText('Notes')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /save article/i })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /cancel/i })).toBeTruthy()
   })
 
   test("handles page data extraction failure", async () => {
     mockChrome.tabs.query.mockRejectedValue(new Error('Tab query failed'))
-    
+
     render(<Popup />)
 
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Error loading page data'))
+      expect(screen.queryByText('Error loading page data')).toBeTruthy()
     })
   })
 })
@@ -103,23 +86,23 @@ describe('Form Submission', () => {
 
     // Wait for page data to load
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Test Article Title'))
+      expect(screen.queryByText('Test Article Title')).toBeTruthy()
     })
 
     // Enter tags and notes
-    const tagsInput = findByLabelText('Tags (comma-separated)') as HTMLInputElement
-    const notesInput = findByLabelText('Notes') as HTMLInputElement
-    
+    const tagsInput = screen.queryByLabelText('Tags (comma-separated)') as HTMLInputElement
+    const notesInput = screen.queryByLabelText('Notes') as HTMLInputElement
+
     await user.type(tagsInput, 'tech, article, important')
     await user.type(notesInput, 'This is a test note')
 
     // Submit form
-    const saveButton = findByRole('button', { name: /save article/i }) as HTMLButtonElement
+    const saveButton = screen.queryByRole('button', { name: /save article/i }) as HTMLButtonElement
     await user.click(saveButton)
 
     // Wait for success message
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Article saved successfully!'))
+      expect(screen.queryByText('Article saved successfully!')).toBeTruthy()
     })
 
     // Verify runtime message was sent with correct data
@@ -146,16 +129,16 @@ describe('Form Submission', () => {
 
     // Wait for page data to load
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Test Article Title'))
+      expect(screen.queryByText('Test Article Title')).toBeTruthy()
     })
 
     // Submit form
-    const saveButton = findByRole('button', { name: /save article/i }) as HTMLButtonElement
+    const saveButton = screen.queryByRole('button', { name: /save article/i }) as HTMLButtonElement
     await user.click(saveButton)
 
     // Wait for error message
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Failed to save article'))
+      expect(screen.queryByText('Failed to save article')).toBeTruthy()
     })
 
     // Button should be enabled again
@@ -170,16 +153,16 @@ describe('Form Submission', () => {
 
     // Wait for page data to load
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Test Article Title'))
+      expect(screen.queryByText('Test Article Title')).toBeTruthy()
     })
 
     // Submit form
-    const saveButton = findByRole('button', { name: /save article/i }) as HTMLButtonElement
+    const saveButton = screen.queryByRole('button', { name: /save article/i }) as HTMLButtonElement
     await user.click(saveButton)
 
     // Wait for error message
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Failed to save article'))
+      expect(screen.queryByText('Failed to save article')).toBeTruthy()
     })
   })
 })
@@ -193,16 +176,16 @@ describe('Error Handling', () => {
 
     // Wait for component to render
     await waitFor(() => {
-      expectElementToExist(findByRole('button', { name: /save article/i }))
+      expect(screen.queryByRole('button', { name: /save article/i })).toBeTruthy()
     })
 
     // Try to submit form
-    const saveButton = findByRole('button', { name: /save article/i }) as HTMLButtonElement
+    const saveButton = screen.queryByRole('button', { name: /save article/i }) as HTMLButtonElement
     await user.click(saveButton)
 
     // Should show error message
     await waitFor(() => {
-      expectElementToExist(findByTextContent('No page data available'))
+      expect(screen.queryByText('No page data available')).toBeTruthy()
     })
   })
 })
@@ -215,7 +198,7 @@ describe('User Interactions', () => {
 
     render(<Popup />)
 
-    const cancelButton = findByRole('button', { name: /cancel/i }) as HTMLButtonElement
+    const cancelButton = screen.queryByRole('button', { name: /cancel/i }) as HTMLButtonElement
     await user.click(cancelButton)
 
     expect(mockWindowClose).toHaveBeenCalled()
@@ -233,16 +216,16 @@ test("save button wires to the sync engine", async () => {
 
     // Wait for page data to load
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Test Article Title'))
+      expect(screen.queryByText('Test Article Title')).toBeTruthy()
     })
 
     // Submit form
-    const saveButton = findByRole('button', { name: /save article/i }) as HTMLButtonElement
+    const saveButton = screen.queryByRole('button', { name: /save article/i }) as HTMLButtonElement
     await user.click(saveButton)
 
     // Wait for success message
     await waitFor(() => {
-      expectElementToExist(findByTextContent('Article saved successfully!'))
+      expect(screen.queryByText('Article saved successfully!')).toBeTruthy()
     })
 
     // Verify runtime message was sent with correct data
@@ -260,7 +243,7 @@ test("automatically closes window after successful save", async () => {
   const user = userEvent.setup()
   const mockWindowClose = vi.fn()
   window.close = mockWindowClose
-  
+
   const mockSaveResponse: SaveArticleResponse = {
     success: true,
     message: 'Article saved successfully'
@@ -271,16 +254,16 @@ test("automatically closes window after successful save", async () => {
 
   // Wait for page data to load
   await waitFor(() => {
-    expectElementToExist(findByTextContent('Test Article Title'))
+    expect(screen.queryByText('Test Article Title')).toBeTruthy()
   })
 
   // Submit form
-  const saveButton = findByRole('button', { name: /save article/i }) as HTMLButtonElement
+  const saveButton = screen.queryByRole('button', { name: /save article/i }) as HTMLButtonElement
   await user.click(saveButton)
 
   // Wait for success message
   await waitFor(() => {
-    expectElementToExist(findByTextContent('Article saved successfully!'))
+    expect(screen.queryByText('Article saved successfully!')).toBeTruthy()
   })
 
   // Wait for window to close (with timeout)
@@ -301,15 +284,15 @@ test("tags input handles empty and whitespace values", async () => {
 
   // Wait for page data to load
   await waitFor(() => {
-    expectElementToExist(findByTextContent('Test Article Title'))
+    expect(screen.queryByText('Test Article Title')).toBeTruthy()
   })
 
   // Enter tags with extra whitespace
-  const tagsInput = findByLabelText('Tags (comma-separated)') as HTMLInputElement
+  const tagsInput = screen.queryByLabelText('Tags (comma-separated)') as HTMLInputElement
   await user.type(tagsInput, '  tech  ,  article  ,  ')
 
   // Submit form
-  const saveButton = findByRole('button', { name: /save article/i }) as HTMLButtonElement
+  const saveButton = screen.queryByRole('button', { name: /save article/i }) as HTMLButtonElement
   await user.click(saveButton)
 
   // Verify runtime message was sent with trimmed tags (empty string remains)
