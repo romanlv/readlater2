@@ -36,7 +36,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Handle Web Share Target POST - be more specific about matching
-  if (event.request.method === 'POST' && url.pathname === '/') {
+  // Get the base path from the service worker's own location
+  const swUrl = new URL(self.location.href);
+  const basePath = swUrl.pathname.replace('/sw.js', '') || '/';
+  const isShareTarget = event.request.method === 'POST' && url.pathname === basePath;
+  if (isShareTarget) {
     swLog('✅ Web Share Target POST detected!');
     swLog('Request URL:', event.request.url);
     swLog('Request method:', event.request.method);
@@ -72,7 +76,7 @@ self.addEventListener('fetch', (event) => {
           }
 
           // Build redirect URL with all available data
-          const redirectUrl = `${self.location.origin}/?share_target=1#title=${encodeURIComponent(title as string)}&text=${encodeURIComponent(text as string)}&url=${encodeURIComponent(validUrl)}`;
+          const redirectUrl = `${self.location.origin}${basePath}?share_target=1#title=${encodeURIComponent(title as string)}&text=${encodeURIComponent(text as string)}&url=${encodeURIComponent(validUrl)}`;
           swLog('🔄 Redirecting to:', redirectUrl);
 
           return Response.redirect(redirectUrl, 303);
@@ -82,7 +86,7 @@ self.addEventListener('fetch', (event) => {
           swLog('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
           
           // Return to app with error info for debugging
-          return Response.redirect(`${self.location.origin}/?share_target=1#error=processing_failed`, 303);
+          return Response.redirect(`${self.location.origin}${basePath}?share_target=1#error=processing_failed`, 303);
         }
       })(),
     );
