@@ -6,7 +6,8 @@ import { usePaginatedArticles, useAddArticle, useUpdateArticle, useDeleteArticle
 import { Article } from '@/lib/db';
 import { SyncStatus } from './sync-status';
 import { config } from '@/config';
-import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone } from 'lucide-react';
+import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter } from 'lucide-react';
+import { ArticleFilters } from './repository';
 
 // Hook to track online/offline status
 function useOnlineStatus() {
@@ -29,16 +30,31 @@ function useOnlineStatus() {
 }
 
 
+type FilterType = 'all' | 'active' | 'archived';
+
 export function ArticleList() {
   const [urlInput, setUrlInput] = useState('');
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newArticleData, setNewArticleData] = useState<Partial<ArticleFormData> | null>(null);
+  const [currentFilter, setCurrentFilter] = useState<FilterType>('active');
   const isOnline = useOnlineStatus();
 
+  // Convert filter type to ArticleFilters
+  const getFilters = (): ArticleFilters => {
+    switch (currentFilter) {
+      case 'active':
+        return { archived: false };
+      case 'archived':
+        return { archived: true };
+      default:
+        return {};
+    }
+  };
+
   // Use React Query hooks for IndexedDB
-  const { data, fetchNextPage, hasNextPage, isFetching, isLoading, error } = usePaginatedArticles();
+  const { data, fetchNextPage, hasNextPage, isFetching, isLoading, error } = usePaginatedArticles(getFilters());
   const addArticleMutation = useAddArticle();
   const updateArticleMutation = useUpdateArticle();
   const deleteArticleMutation = useDeleteArticle();
@@ -179,6 +195,37 @@ export function ArticleList() {
             <SyncStatus config={config} isOnline={isOnline} />
           </div>
 
+          {/* Filter Bar */}
+          <div className="mb-4 flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant={currentFilter === 'all' ? 'default' : 'outline'}
+                onClick={() => setCurrentFilter('all')}
+                className="text-xs h-8"
+              >
+                All
+              </Button>
+              <Button
+                size="sm"
+                variant={currentFilter === 'active' ? 'default' : 'outline'}
+                onClick={() => setCurrentFilter('active')}
+                className="text-xs h-8"
+              >
+                Active
+              </Button>
+              <Button
+                size="sm"
+                variant={currentFilter === 'archived' ? 'default' : 'outline'}
+                onClick={() => setCurrentFilter('archived')}
+                className="text-xs h-8"
+              >
+                Archived
+              </Button>
+            </div>
+          </div>
+
           <ul className="mb-4 space-y-2">
             {articles.map((article) => (
               <li key={article.url} className="p-3 border-b border-gray-200">
@@ -211,37 +258,37 @@ export function ArticleList() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(article)}
-                          className="text-gray-400 hover:text-gray-600 p-1 h-6 w-6"
+                          className="text-gray-400 hover:text-gray-600 p-1 h-8 w-8"
                           title="Edit article"
                         >
-                          <Edit className="w-3 h-3" />
+                          <Edit className="w-4 h-4" />
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => handleToggleFavorite(article.url, article.favorite)}
-                          className={`p-1 h-6 w-6 ${article.favorite ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-gray-600'}`}
+                          className={`p-1 h-8 w-8 ${article.favorite ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-gray-600'}`}
                           title={article.favorite ? "Remove from favorites" : "Add to favorites"}
                         >
-                          <Star className={`w-3 h-3 ${article.favorite ? 'fill-current' : ''}`} />
+                          <Star className={`w-4 h-4 ${article.favorite ? 'fill-current' : ''}`} />
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => handleToggleArchive(article.url, article.archived)}
-                          className="text-gray-400 p-1 h-6 w-6"
+                          className="text-gray-400 p-1 h-8 w-8"
                           title={article.archived ? "Unarchive article" : "Archive article"}
                         >
-                          {article.archived ? <ArchiveRestore className="w-3 h-3" /> : <Archive className="w-3 h-3" />}
+                          {article.archived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDelete(article.url)}
-                          className="text-red-400 hover:text-red-600 p-1 h-6 w-6"
+                          className="text-red-400 hover:text-red-600 p-1 h-8 w-8"
                           title="Delete article"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
