@@ -182,69 +182,69 @@ export function ArticleList() {
           <ul className="mb-4 space-y-2">
             {articles.map((article) => (
               <li key={article.url} className="p-3 border-b border-gray-200">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <a
-                      href={article.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      {article.title}
-                    </a>
+                <div className="flex flex-col">
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-medium break-words"
+                  >
+                    {article.title}
+                  </a>
                     {article.description && (
-                      <p className="text-sm text-gray-600 mt-1">{article.description}</p>
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{article.description}</p>
                     )}
-                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                      <span>{article.domain}</span>
-                      <span>•</span>
-                      <span>{new Date(article.timestamp).toLocaleDateString()}</span>
-                      {article.syncStatus === 'pending' && (
-                        <>
-                          <span>•</span>
-                          <span className="text-orange-500">Pending sync</span>
-                        </>
-                      )}
+                    <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2">
+                        <span>{article.domain}</span>
+                        <span>•</span>
+                        <span>{new Date(article.timestamp).toISOString().split('T')[0]}</span>
+                        {article.syncStatus === 'pending' && (
+                          <>
+                            <span>•</span>
+                            <span className="text-orange-500">Pending sync</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(article)}
+                          className="text-gray-400 hover:text-gray-600 p-1 h-6 w-6"
+                          title="Edit article"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleToggleFavorite(article.url, article.favorite)}
+                          className={`p-1 h-6 w-6 ${article.favorite ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-gray-600'}`}
+                          title={article.favorite ? "Remove from favorites" : "Add to favorites"}
+                        >
+                          <Star className={`w-3 h-3 ${article.favorite ? 'fill-current' : ''}`} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleToggleArchive(article.url, article.archived)}
+                          className="text-gray-400 p-1 h-6 w-6"
+                          title={article.archived ? "Unarchive article" : "Archive article"}
+                        >
+                          {article.archived ? <ArchiveRestore className="w-3 h-3" /> : <Archive className="w-3 h-3" />}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(article.url)}
+                          className="text-red-400 hover:text-red-600 p-1 h-6 w-6"
+                          title="Delete article"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-1 ml-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleEdit(article)}
-                      className="text-gray-400 hover:text-gray-600"
-                      title="Edit article"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleToggleFavorite(article.url, article.favorite)}
-                      className={article.favorite ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-gray-600'}
-                      title={article.favorite ? "Remove from favorites" : "Add to favorites"}
-                    >
-                      <Star className={`w-4 h-4 ${article.favorite ? 'fill-current' : ''}`} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleToggleArchive(article.url, article.archived)}
-                      className="text-gray-400"
-                      title={article.archived ? "Unarchive article" : "Archive article"}
-                    >
-                      {article.archived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDelete(article.url)}
-                      className="text-red-400 hover:text-red-600"
-                      title="Delete article"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
                 </div>
               </li>
             ))}
