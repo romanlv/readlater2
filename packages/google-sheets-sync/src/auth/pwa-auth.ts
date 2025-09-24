@@ -72,10 +72,16 @@ export class PwaAuthProvider implements AuthProvider {
   }
 
   async getAuthToken(): Promise<string> {
+    // Always check storage first in case token was updated elsewhere
+    this.loadTokenFromStorage();
+
     if (this.token) {
+      console.log('Using cached auth token');
       return this.token;
     }
+
     // If no token, signal to the UI that it needs to initiate the auth flow.
+    console.log('No auth token available, authentication required');
     throw new AuthenticationRequiredError();
   }
 
@@ -114,7 +120,11 @@ export class PwaAuthProvider implements AuthProvider {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    return this.token !== null;
+    // Always refresh from storage before checking
+    this.loadTokenFromStorage();
+    const isAuth = this.token !== null;
+    console.log(`Auth status check: ${isAuth ? 'authenticated' : 'not authenticated'}`);
+    return isAuth;
   }
 
   async authenticate(): Promise<void> {

@@ -28,6 +28,11 @@ export const getAuthProvider = (): PwaAuthProvider => {
   return authProvider;
 }
 
+// Safe version that doesn't throw if not initialized
+export const getAuthProviderSafely = (): PwaAuthProvider | null => {
+  return authProvider;
+}
+
 export const saveArticlesToSheet = async (articles: ArticleData[], config: GoogleSheetsConfig): Promise<void> => {
   const engine = initializeGoogleSheetsSync(config);
 

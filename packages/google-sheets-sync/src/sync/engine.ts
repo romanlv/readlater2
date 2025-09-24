@@ -44,23 +44,133 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
     try {
       console.log('Getting auth token...');
       const token = await this.manager['authProvider'].getAuthToken();
-      
+
       console.log('Got auth token, getting/creating spreadsheet...');
       const spreadsheetId = await this.manager.getOrCreateSpreadsheet();
-      
+
       console.log('Fetching articles from spreadsheet ID:', spreadsheetId);
-      
+
       const rows = await this.manager.getAllRows(token, spreadsheetId);
-      const articles = rows
-        .filter(row => row.length > 0 && row[0]) // Filter out empty rows
-        .map(row => sheetRowToArticle(row));
-      
-      console.log(`Successfully loaded ${articles.length} articles from Google Sheets`);
-      return articles;
+
+      // Enhanced validation and filtering
+      const validArticles: ArticleData[] = [];
+      const invalidRows: string[][] = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+
+        // Skip completely empty rows
+        if (!row || row.length === 0 || !row.some(cell => cell?.trim())) {
+          continue;
+        }
+
+        // Validate that row has minimum required data
+        if (!row[0]?.trim()) { // URL is required
+          console.warn(`Row ${i + 2} missing URL, skipping:`, row);
+          invalidRows.push(row);
+          continue;
+        }
+
+        if (!row[1]?.trim()) { // Title is required
+          console.warn(`Row ${i + 2} missing title, skipping:`, row);
+          invalidRows.push(row);
+          continue;
+        }
+
+        try {
+          const article = sheetRowToArticle(row);
+
+          // Additional validation on the parsed article
+          if (!this.validateArticleData(article)) {
+            console.warn(`Row ${i + 2} failed validation after parsing:`, article);
+            invalidRows.push(row);
+            continue;
+          }
+
+          validArticles.push(article);
+        } catch (parseError) {
+          console.warn(`Failed to parse row ${i + 2}:`, parseError, row);
+          invalidRows.push(row);
+        }
+      }
+
+      // Log summary of what we found
+      console.log(`Successfully loaded ${validArticles.length} valid articles from Google Sheets`);
+      if (invalidRows.length > 0) {
+        console.warn(`Skipped ${invalidRows.length} invalid rows`);
+
+        // If more than 25% of rows are invalid, something might be seriously wrong
+        const totalRows = rows.length;
+        const invalidRatio = invalidRows.length / totalRows;
+        if (totalRows > 0 && invalidRatio > 0.25) {
+          console.error(`High invalid row ratio detected: ${invalidRows.length}/${totalRows} (${Math.round(invalidRatio * 100)}%)`);
+          console.error('This might indicate spreadsheet corruption or format changes');
+          // Still return valid articles, but log the issue for investigation
+        }
+      }
+
+      return validArticles;
     } catch (error) {
       console.error('Error loading articles:', error);
+
+      // Provide more specific error context
+      if (error instanceof Error) {
+        if (error.message.includes('404')) {
+          throw new Error('Spreadsheet not found - it may have been deleted');
+        } else if (error.message.includes('403')) {
+          throw new Error('Access denied to spreadsheet - check permissions');
+        } else if (error.message.includes('401')) {
+          throw new Error('Authentication failed - token may be expired');
+        }
+      }
+
       throw error;
     }
+  }
+
+  private validateArticleData(article: ArticleData): boolean {
+    // Check required fields
+    if (!article.url || typeof article.url !== 'string') {
+      return false;
+    }
+
+    if (!article.title || typeof article.title !== 'string') {
+      return false;
+    }
+
+    // Validate URL format (basic check)
+    try {
+      new URL(article.url);
+    } catch {
+      console.warn(`Invalid URL format: ${article.url}`);
+      return false;
+    }
+
+    // Validate timestamp if present
+    if (article.timestamp) {
+      if (typeof article.timestamp !== 'string') {
+        return false;
+      }
+
+      // Try to parse timestamp
+      const timestamp = new Date(article.timestamp);
+      if (isNaN(timestamp.getTime())) {
+        console.warn(`Invalid timestamp: ${article.timestamp}`);
+        return false;
+      }
+
+      // Check for reasonable timestamp (not too far in past or future)
+      const now = new Date();
+      const tenYearsAgo = new Date(now.getFullYear() - 10, 0, 1);
+      const oneYearFromNow = new Date(now.getFullYear() + 1, 11, 31);
+
+      if (timestamp < tenYearsAgo || timestamp > oneYearFromNow) {
+        console.warn(`Suspicious timestamp: ${article.timestamp}`);
+        // Don't fail validation for this - just log it
+      }
+    }
+
+    return true;
   }
 
   async saveArticles(articles: ArticleData[]): Promise<SyncResult[]> {
