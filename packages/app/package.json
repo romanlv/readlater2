@@ -4,13 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "VITE_BASE_PATH=/readlater2/ vite",
+    "dev": "vite",
     "tunnel": "dotenv -e .env -- sh -c 'cloudflared tunnel run --token $CLOUDFLARED_TOKEN'",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy:gh-pages": "VITE_BASE_PATH=/readlater2/ pnpm build",
+    "deploy:gh-pages": "pnpm build",
     "generate-pwa-icons": "echo 'PWA icons created manually using sips'",
     "test": "vitest"
   },

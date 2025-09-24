@@ -174,45 +174,11 @@ export class SyncService {
       clearTimeout(syncTimeoutId);
       return { success: false, error: errorMessage };
     } finally {
-      // SAFETY NET: Ensure sync state is never left as 'syncing'
-      // This prevents the sync from getting permanently stuck
-      if (this.syncState.status === 'syncing') {
-        console.warn('Sync state was still "syncing" in finally block, resetting to idle');
-        this.setState({ status: 'idle' });
-      }
-
       // Always clear timeout in finally block as additional safety
       clearTimeout(syncTimeoutId);
     }
   }
 
-  private async processSyncQueue(): Promise<void> {
-    const operations = await articleRepository.getPendingSyncOperations();
-    const syncEngine = initializeGoogleSheetsSync(this.config!);
-
-    for (const operation of operations) {
-      try {
-        await this.processSyncOperation(operation, syncEngine);
-        await articleRepository.removeSyncOperation(operation.id);
-      } catch (error) {
-        console.error(`Failed to process sync operation ${operation.id}:`, error);
-
-        // Handle authentication errors differently
-        if (error instanceof AuthenticationRequiredError) {
-          throw error; // Re-throw auth errors to stop sync
-        }
-
-        // Increment retry count for other errors
-        await articleRepository.incrementSyncRetryCount(operation.id);
-
-        // Remove operation if it has failed too many times (3 total attempts)
-        if (operation.retryCount >= 2) {
-          console.warn(`Removing sync operation ${operation.id} after ${operation.retryCount + 1} failed attempts`);
-          await articleRepository.removeSyncOperation(operation.id);
-        }
-      }
-    }
-  }
 
   private async processSyncOperation(
     operation: SyncOperation,
@@ -335,7 +301,7 @@ export class SyncService {
     // Validate that each article has required fields
     let validArticleCount = 0;
     for (const article of remoteArticles) {
-      if (article && typeof article === 'object' && article.url && article.title) {
+      if (article && typeof article === 'object' && 'url' in article && 'title' in article && article.url && article.title) {
         validArticleCount++;
       } else {
         console.warn('Invalid remote article detected:', article);
@@ -397,10 +363,6 @@ export class SyncService {
     return remoteTime > localTime ? remote : local;
   }
 
-  private resolveConflict(local: Article, remote: Article): Article {
-    // Legacy method - redirecting to safer version
-    return this.resolveConflictSafely(local, remote);
-  }
 
   private articleToSheetData(article: Article): ArticleData {
     return {
