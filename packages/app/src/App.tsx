@@ -11,6 +11,7 @@ import PWABadge from "./PWABadge"
 import { DebugPanel } from "@/components/debug-panel"
 import { BuildInfo } from "@/components/build-info"
 import { queryClient } from "@/lib/query-client"
+import { ThemeProvider } from "@/hooks/use-theme"
 
 interface SharedData {
   title?: string;
@@ -116,9 +117,11 @@ function AppContent() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppContent />
-    </QueryClientProvider>
+    <ThemeProvider defaultTheme="system" storageKey="readlater-theme">
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

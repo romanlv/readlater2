@@ -88,7 +88,7 @@ describe('Share Target Feature', () => {
     render(<App />);
 
     // Should now show the edit form directly with the title "Save Article"
-    expect(document.querySelector('[data-slot="card-title"]')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Save Article' })).toBeTruthy();
     expect(screen.queryByDisplayValue('Test Article')).toBeTruthy();
     expect(screen.queryByDisplayValue('https://example.com')).toBeTruthy();
     expect(screen.queryByDisplayValue('Test description')).toBeTruthy();
@@ -107,7 +107,7 @@ describe('Share Target Feature', () => {
     render(<App />);
 
     // Should show the edit form with empty fields since sharedData exists but has undefined values
-    expect(document.querySelector('[data-slot="card-title"]')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Save Article' })).toBeTruthy();
     // Check for URL input field
     expect(screen.queryByLabelText('URL')).toBeTruthy();
   });
@@ -126,7 +126,7 @@ describe('Share Target Feature', () => {
     render(<App />);
 
     // Should show the edit form directly with shared data
-    expect(document.querySelector('[data-slot="card-title"]')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Save Article' })).toBeTruthy();
     expect(screen.queryByDisplayValue('Test Article')).toBeTruthy();
     expect(screen.queryByDisplayValue('https://example.com')).toBeTruthy();
 
@@ -218,7 +218,7 @@ describe('Share Target Feature', () => {
     render(<App />);
 
     // Should show the edit form with the URL pre-filled
-    expect(document.querySelector('[data-slot="card-title"]')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Save Article' })).toBeTruthy();
     // Use specific label to find the URL input field to avoid multiple elements
     expect(screen.queryByLabelText('URL')).toBeTruthy();
   });

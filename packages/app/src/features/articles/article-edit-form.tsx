@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export interface ArticleFormData {
   url: string;
@@ -63,78 +62,83 @@ export function ArticleEditForm({
   };
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle>
+    <div className="w-full max-w-2xl">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-foreground">
           {mode === 'create' ? 'Save Article' : 'Edit Article'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="url">URL</Label>
+        </h2>
+      </div>
+      <div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-3">
+            <Label htmlFor="url" className="text-foreground font-medium">URL</Label>
             <Input
               id="url"
               type="url"
               value={formData.url}
               onChange={(e) => handleInputChange('url', e.target.value)}
-              placeholder="https://example.com/article"
+              placeholder="https://stephango.com/vault"
               required
               disabled={mode === 'edit'} // URL should not be editable in edit mode
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+          <div className="space-y-3">
+            <Label htmlFor="title" className="text-foreground font-medium">Title</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Article title"
+              placeholder="How I use Obsidian — Steph Ango"
               required
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+          <div className="space-y-3">
+            <Label htmlFor="description" className="text-foreground font-medium">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Brief description of the article"
+              placeholder="https://stephango.com/vault"
               rows={3}
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground resize-none"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+          <div className="space-y-3">
+            <Label htmlFor="notes" className="text-foreground font-medium">Notes</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
               placeholder="Your personal notes about this article"
               rows={4}
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground resize-none"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags</Label>
+          <div className="space-y-3">
+            <Label htmlFor="tags" className="text-foreground font-medium">Tags</Label>
             <Input
               id="tags"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
               placeholder="technology, programming, ai (separate with commas)"
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground"
             />
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Separate tags with commas
             </p>
           </div>
 
-          <div className="flex gap-2 pt-4 border-t">
+          <div className="flex gap-3 pt-6">
             <Button
               type="submit"
               disabled={isLoading || !formData.url.trim() || !formData.title.trim()}
-              className="flex-1"
+              className="flex-1 font-medium py-3"
             >
               {isLoading ? 'Saving...' : mode === 'create' ? 'Save Article' : 'Update Article'}
             </Button>
@@ -143,13 +147,13 @@ export function ArticleEditForm({
               variant="outline"
               onClick={onCancel}
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 py-3"
             >
               Cancel
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

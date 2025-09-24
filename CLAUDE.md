@@ -128,3 +128,6 @@ Do what has been asked; nothing more, nothing less.
 prefer editing an existing file to creating a new one.
 NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
 - packages/app/src/components/ui/ should be used only for shared components
+- dev servier is already running, no need to run `pnpm dev`
+- use theme-aware CSS variables instead of hardcoded colors so it works properly with both light and dark
+  themes

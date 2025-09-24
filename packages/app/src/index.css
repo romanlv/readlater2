@@ -151,3 +151,18 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 }
+
+/* Apply theme-aware background to prevent whitespace in dark mode */
+html {
+  background-color: var(--color-background);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+#root {
+  background-color: var(--color-background);
+  min-height: 100vh;
+}

@@ -8,6 +8,7 @@ import { SyncStatus } from './sync-status';
 import { config } from '@/config';
 import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter } from 'lucide-react';
 import { ArticleFilters } from './repository';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 // Hook to track online/offline status
 function useOnlineStatus() {
@@ -162,9 +163,9 @@ export function ArticleList() {
 
   if (error) {
     return (
-      <div className="container max-w-2xl mx-auto p-4">
+      <div className="container max-w-2xl mx-auto p-4 min-h-screen bg-background text-foreground">
         <h1 className="text-2xl font-bold text-center mb-4">Read It Later 2.0b</h1>
-        <div className="text-red-600 text-center">
+        <div className="text-destructive text-center">
           Error loading articles: {error.message}
         </div>
       </div>
@@ -172,12 +173,18 @@ export function ArticleList() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold text-center mb-4">Read It Later 2.0b</h1>
+    <div className="container max-w-2xl mx-auto p-4 min-h-screen bg-background text-foreground">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex-1" />
+        <h1 className="text-2xl font-bold">Read It Later 2.0b</h1>
+        <div className="flex-1 flex justify-end">
+          <ThemeSwitcher />
+        </div>
+      </div>
 
       {!isOnline && (
-        <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
-          <div className="text-orange-800 text-sm flex items-center gap-2">
+        <div className="mb-4 p-3 bg-accent/20 border border-accent/30 rounded-md">
+          <div className="text-accent-foreground text-sm flex items-center gap-2">
             <Smartphone className="w-4 h-4" />
             <span><strong>Offline mode:</strong> All changes are saved locally and will sync when you're back online.</span>
           </div>
@@ -189,7 +196,7 @@ export function ArticleList() {
       ) : (
         <>
           <div className="mb-4 flex items-center justify-between text-sm">
-            <div className="text-gray-600">
+            <div className="text-muted-foreground">
               {articles.length} articles • Offline ready
             </div>
             <SyncStatus config={config} isOnline={isOnline} />
@@ -197,7 +204,7 @@ export function ArticleList() {
 
           {/* Filter Bar */}
           <div className="mb-4 flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
+            <Filter className="w-4 h-4 text-muted-foreground" />
             <div className="flex gap-1">
               <Button
                 size="sm"
@@ -228,20 +235,20 @@ export function ArticleList() {
 
           <ul className="mb-4 space-y-2">
             {articles.map((article) => (
-              <li key={article.url} className="p-3 border-b border-gray-200">
+              <li key={article.url} className="p-3 border-b border-border">
                 <div className="flex flex-col">
                   <a
                     href={article.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline font-medium break-words"
+                    className="text-foreground hover:underline font-medium break-words"
                   >
                     {article.title}
                   </a>
                     {article.description && (
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{article.description}</p>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{article.description}</p>
                     )}
-                    <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                    <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <span>{article.domain}</span>
                         <span>•</span>
@@ -249,7 +256,7 @@ export function ArticleList() {
                         {article.syncStatus === 'pending' && (
                           <>
                             <span>•</span>
-                            <span className="text-orange-500">Pending sync</span>
+                            <span className="text-accent-foreground">Pending sync</span>
                           </>
                         )}
                       </div>
@@ -258,7 +265,7 @@ export function ArticleList() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(article)}
-                          className="text-gray-400 hover:text-gray-600 p-1 h-8 w-8"
+                          className="text-muted-foreground hover:text-foreground p-1 h-8 w-8"
                           title="Edit article"
                         >
                           <Edit className="w-4 h-4" />
@@ -267,7 +274,7 @@ export function ArticleList() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleToggleFavorite(article.url, article.favorite)}
-                          className={`p-1 h-8 w-8 ${article.favorite ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-gray-600'}`}
+                          className={`p-1 h-8 w-8 ${article.favorite ? 'text-accent hover:text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                           title={article.favorite ? "Remove from favorites" : "Add to favorites"}
                         >
                           <Star className={`w-4 h-4 ${article.favorite ? 'fill-current' : ''}`} />
@@ -276,7 +283,7 @@ export function ArticleList() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleToggleArchive(article.url, article.archived)}
-                          className="text-gray-400 p-1 h-8 w-8"
+                          className="text-muted-foreground hover:text-foreground p-1 h-8 w-8"
                           title={article.archived ? "Unarchive article" : "Archive article"}
                         >
                           {article.archived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
@@ -285,7 +292,7 @@ export function ArticleList() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDelete(article.url)}
-                          className="text-red-400 hover:text-red-600 p-1 h-8 w-8"
+                          className="text-destructive hover:text-destructive/80 p-1 h-8 w-8"
                           title="Delete article"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -315,12 +322,12 @@ export function ArticleList() {
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               placeholder="Enter URL"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-input rounded-l-md focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
               onKeyDown={(e) => e.key === 'Enter' && addArticle()}
             />
             <Button
               onClick={addArticle}
-              className="bg-green-600 hover:bg-green-700 rounded-l-none"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-l-none"
               disabled={addArticleMutation.isPending}
               title={!isOnline ? 'Article will be saved locally and synced when online' : ''}
             >
