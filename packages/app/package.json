@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy:gh-pages": "pnpm build",
-    "generate-pwa-icons": "echo 'PWA icons created manually using sips'",
+    "generate-pwa-assets": "pwa-assets-generator --preset minimal-2023 public/logo.svg",
     "test": "vitest"
   },
   "dependencies": {
@@ -39,7 +39,7 @@
     "@types/node": "^24.0.7",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@vite-pwa/assets-generator": "^0.2.6",
+    "@vite-pwa/assets-generator": "^1.0.1",
     "@vitejs/plugin-react": "^4.5.2",
     "dotenv-cli": "^8.0.0",
     "eslint": "^9.29.0",

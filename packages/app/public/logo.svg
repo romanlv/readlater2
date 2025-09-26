@@ -1,0 +1,47 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+ width="498.000000pt" height="498.000000pt" viewBox="0 0 498.000000 498.000000"
+ preserveAspectRatio="xMidYMid meet">
+
+<!-- Define Gradients -->
+<defs>
+  <!-- Background gradient from dark blue to lighter blue -->
+  <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" style="stop-color:#243663;stop-opacity:1" />
+    <stop offset="50%" style="stop-color:#2C5282;stop-opacity:1" />
+    <stop offset="100%" style="stop-color:#4A90B8;stop-opacity:1" />
+  </linearGradient>
+  
+  <!-- Alternative diagonal gradient if you prefer -->
+  <linearGradient id="diagonalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" style="stop-color:#1E3A5F;stop-opacity:1" />
+    <stop offset="100%" style="stop-color:#5296C4;stop-opacity:1" />
+  </linearGradient>
+</defs>
+
+<!-- Background Rectangle with Gradient -->
+<rect width="498" height="498" fill="url(#backgroundGradient)"/>
+
+<!-- Logo Paths in White -->
+<g transform="translate(0.000000,498.000000) scale(0.100000,-0.100000)"
+fill="#FFFFFF" stroke="none">
+<path d="M4171 4066 c92 -21 143 -57 175 -121 23 -48 26 -64 22 -120 -8 -88 -36
+-133 -171 -265 l-112 -110 158 0 158 0 -3 -82 -3 -83 -302 -3 -303 -2 0 63 0
+64 171 167 c106 104 176 180 185 203 52 123 -103 179 -214 78 l-38 -33 -64 50
+c-36 27 -66 56 -68 63 -2 7 17 29 41 49 101 83 237 113 368 82z m-2181 -289
+c404 -100 676 -389 740 -789 20 -123 8 -333 -24 -441 -69 -230 -197 -407 -388
+-535 -38 -25 -68 -49 -68 -53 0 -5 51 -95 114 -201 219 -373 507 -868 512
+-883 6 -13 -40 -15 -397 -13 l-404 3 -61 105 c-33 58 -176 304 -317 547 l-257
+441 0 276 0 276 163 0 c186 0 241 11 309 63 27 21 55 56 75 96 28 53 33 74 33
+130 0 37 -7 88 -16 114 -21 63 -83 130 -152 164 l-57 28 -282 3 -283 4 0
+-1126 0 -1126 -355 0 -355 0 0 1471 0 1470 703 -4 c601 -3 711 -6 767 -20z
+m1581 -874 c1 -494 3 -951 5 -1015 1 -65 -1 -120 -5 -123 -14 -8 -132 45 -206
+92 -184 119 -321 318 -382 552 -22 84 -26 128 -33 356 -7 231 -11 271 -34 358
+-14 54 -37 124 -51 155 -25 55 -26 60 -26 281 1 125 1 229 1 234 0 4 164 7
+365 7 l365 0 1 -897z m-569 -1012 c98 -119 221 -210 375 -276 146 -63 164 -65
+779 -65 l554 0 0 -345 0 -345 -723 0 -723 0 -70 34 c-125 60 -248 197 -305
+338 -47 117 -49 134 -49 527 l0 374 53 -86 c28 -48 78 -118 109 -156z"/>
+</g>
+</svg>

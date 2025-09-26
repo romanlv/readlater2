@@ -56,18 +56,6 @@ export default mergeConfig(defineConfig({
           url: 'url'
         }
       },
-
-      screenshots: [{
-        src: 'screenshot-wide.png',
-        sizes: '640x320',
-        type: 'image/png',
-        form_factor: 'wide',
-      }, {
-        src: 'screenshot-320x320.png',
-        sizes: '320x320',
-        type: 'image/png',
-        form_factor: 'narrow',
-      }]
     },
 
     injectManifest: {
