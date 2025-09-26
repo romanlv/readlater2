@@ -10,6 +10,7 @@ export interface ArticleData {
   archived?: boolean;
   favorite?: boolean;
   editedAt?: string;
+  deletedAt?: string;
 }
 
 export interface SaveArticleMessage {

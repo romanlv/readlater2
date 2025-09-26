@@ -288,4 +288,62 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
       };
     }
   }
+
+  async cleanupDeletedArticles(olderThanDays: number = 30): Promise<number> {
+    try {
+      console.log(`Starting cleanup of deleted articles older than ${olderThanDays} days...`);
+      const token = await this.manager['authProvider'].getAuthToken();
+      const spreadsheetId = await this.manager.getOrCreateSpreadsheet();
+
+      const rows = await this.manager.getAllRows(token, spreadsheetId);
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
+
+      const rowsToDelete: number[] = [];
+
+      // Find rows with deletedAt older than cutoff
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const deletedAt = row[11]; // deletedAt is in column 11 (L)
+
+        if (deletedAt && deletedAt.trim()) {
+          try {
+            const deletedDate = new Date(deletedAt);
+            if (!isNaN(deletedDate.getTime()) && deletedDate < cutoffDate) {
+              // Convert array index to sheet row number (add 2 for header and 1-indexed)
+              rowsToDelete.push(i + 2);
+            }
+          } catch {
+            console.warn(`Invalid deletedAt date format in row ${i + 2}: ${deletedAt}`);
+          }
+        }
+      }
+
+      if (rowsToDelete.length === 0) {
+        console.log('No old deleted articles found for cleanup');
+        return 0;
+      }
+
+      console.log(`Found ${rowsToDelete.length} old deleted articles to remove from spreadsheet`);
+
+      // Delete rows in reverse order to avoid index shifting issues
+      rowsToDelete.sort((a, b) => b - a);
+
+      for (const rowNumber of rowsToDelete) {
+        try {
+          await this.manager.deleteRow(token, spreadsheetId, rowNumber);
+          console.log(`Deleted row ${rowNumber} from spreadsheet`);
+        } catch (error) {
+          console.error(`Failed to delete row ${rowNumber}:`, error);
+        }
+      }
+
+      console.log(`Successfully cleaned up ${rowsToDelete.length} old deleted articles from Google Sheets`);
+      return rowsToDelete.length;
+
+    } catch (error) {
+      console.error('Error during Google Sheets cleanup:', error);
+      throw error;
+    }
+  }
 }

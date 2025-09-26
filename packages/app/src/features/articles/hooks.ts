@@ -123,3 +123,14 @@ export function useDeleteArticle() {
     },
   });
 }
+
+export function useRestoreArticle() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (url: string) => articleRepository.restore(url),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+    },
+  });
+}

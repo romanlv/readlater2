@@ -10,6 +10,7 @@ export interface ArticleFilters {
   domain?: string;
   tags?: string[];
   syncStatus?: 'synced' | 'pending';
+  includeDeleted?: boolean; // For sync operations that need to see deleted articles
 }
 
 export interface PaginationOptions {
@@ -103,6 +104,11 @@ export class ArticleRepository {
       });
     }
 
+    // Filter out deleted articles unless explicitly requested
+    if (!filters.includeDeleted) {
+      collection = collection.filter(article => !article.deletedAt);
+    }
+
     // Apply filters using single-field indexes where beneficial
     if (filters.archived !== undefined) {
       collection = collection.filter(article => article.archived === filters.archived);
@@ -141,8 +147,10 @@ export class ArticleRepository {
       return { items: [], hasMore: false };
     }
 
-    // Get all articles and score them
-    const allArticles = await this.db.articles.toArray();
+    // Get all non-deleted articles and score them
+    const allArticles = await this.db.articles
+      .filter(article => !article.deletedAt)
+      .toArray();
     const scoredArticles = allArticles
       .map(article => ({
         article,
@@ -264,9 +272,20 @@ export class ArticleRepository {
   }
 
   async delete(url: string): Promise<void> {
+    const article = await this.getByUrl(url);
+    if (!article) throw new Error('Article not found');
+
+    // Soft delete: mark as deleted instead of removing
+    const deletedArticle: Article = {
+      ...article,
+      deletedAt: Date.now(),
+      syncStatus: 'pending',
+      editedAt: Date.now()
+    };
+
     await this.db.transaction('rw', [this.db.articles, this.db.syncQueue], async () => {
-      await this.db.articles.delete(url);
-      await this.queueSync('delete', url, {});
+      await this.db.articles.put(deletedArticle);
+      await this.queueSync('update', url, deletedArticle); // Use update, not delete
     });
 
     this.countCache.clear();
@@ -308,6 +327,7 @@ export class ArticleRepository {
     return await this.db.articles
       .where('domain')
       .equals(domain)
+      .filter(article => !article.deletedAt) // Filter out deleted articles
       .reverse()
       .sortBy('timestamp');
   }
@@ -347,6 +367,75 @@ export class ArticleRepository {
   // Get all articles (for sync operations that need to check everything)
   async getAllArticles(): Promise<Article[]> {
     return await this.db.articles.toArray();
+  }
+
+  // Get articles including deleted ones (for sync operations)
+  async getAllArticlesIncludingDeleted(): Promise<Article[]> {
+    return await this.db.articles.toArray();
+  }
+
+  // Get only deleted articles (for cleanup operations)
+  async getDeletedArticles(): Promise<Article[]> {
+    return await this.db.articles
+      .filter(article => !!article.deletedAt)
+      .toArray();
+  }
+
+  // Clean up old deleted articles (older than specified days)
+  async cleanupDeletedArticles(olderThanDays: number = 30): Promise<number> {
+    const cutoffTime = Date.now() - (olderThanDays * 24 * 60 * 60 * 1000);
+
+    const oldDeletedArticles = await this.db.articles
+      .filter(article =>
+        !!article.deletedAt &&
+        article.deletedAt < cutoffTime
+      )
+      .toArray();
+
+    if (oldDeletedArticles.length === 0) {
+      return 0;
+    }
+
+    // Remove old deleted articles permanently
+    const urlsToDelete = oldDeletedArticles.map(article => article.url);
+    await this.db.articles.bulkDelete(urlsToDelete);
+
+    this.countCache.clear();
+    console.log(`Cleaned up ${urlsToDelete.length} old deleted articles`);
+
+    return urlsToDelete.length;
+  }
+
+  // Restore a soft-deleted article
+  async restore(url: string): Promise<void> {
+    const article = await this.getByUrl(url);
+    if (!article || !article.deletedAt) {
+      throw new Error('Article not found or not deleted');
+    }
+
+    // Create a new article object without deletedAt
+    const restoredArticle: Article = {
+      url: article.url,
+      title: article.title,
+      description: article.description,
+      featuredImage: article.featuredImage,
+      domain: article.domain,
+      tags: article.tags,
+      notes: article.notes,
+      archived: article.archived,
+      favorite: article.favorite,
+      timestamp: article.timestamp,
+      editedAt: Date.now(),
+      syncStatus: 'pending'
+      // deletedAt is omitted
+    };
+
+    await this.db.transaction('rw', [this.db.articles, this.db.syncQueue], async () => {
+      await this.db.articles.put(restoredArticle);
+      await this.queueSync('update', url, restoredArticle);
+    });
+
+    this.countCache.clear();
   }
 }
 

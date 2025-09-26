@@ -25,6 +25,10 @@ vi.mock('@/features/articles/hooks', () => ({
     mutate: vi.fn(),
     isPending: false,
   })),
+  useRestoreArticle: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
 }));
 
 // Mock the google-sheets module

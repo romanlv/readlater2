@@ -11,7 +11,8 @@ export const SPREADSHEET_HEADERS = [
   'Domain',
   'Archived',
   'Favorite',
-  'Edited At'
+  'Edited At',
+  'Deleted At'
 ] as const;
 
 export function articleToSheetRow(article: ArticleData): string[] {
@@ -26,7 +27,8 @@ export function articleToSheetRow(article: ArticleData): string[] {
     article.domain || '',
     article.archived ? '1' : '',
     article.favorite ? '1' : '',
-    article.editedAt || ''
+    article.editedAt || '',
+    article.deletedAt || ''
   ];
 }
 
@@ -42,6 +44,7 @@ export function sheetRowToArticle(row: string[]): ArticleData {
     domain: row[7] || '',
     archived: row[8] === '1',
     favorite: row[9] === '1',
-    editedAt: row[10] || undefined
+    editedAt: row[10] || undefined,
+    deletedAt: row[11] || undefined
   };
 }

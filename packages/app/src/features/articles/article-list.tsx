@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArticleEditForm, ArticleFormData } from './article-edit-form';
-import { usePaginatedArticles, useAddArticle, useUpdateArticle, useDeleteArticle } from './hooks';
+import { usePaginatedArticles, useAddArticle, useUpdateArticle, useDeleteArticle, useRestoreArticle } from './hooks';
 import { Article } from '@/lib/db';
 import { SyncStatus } from './sync-status';
 import { config } from '@/config';
-import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter } from 'lucide-react';
+import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw } from 'lucide-react';
 import { ArticleFilters } from './repository';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 
@@ -31,7 +31,7 @@ function useOnlineStatus() {
 }
 
 
-type FilterType = 'all' | 'active' | 'archived';
+type FilterType = 'all' | 'active' | 'archived' | 'deleted';
 
 export function ArticleList() {
   const [urlInput, setUrlInput] = useState('');
@@ -49,6 +49,8 @@ export function ArticleList() {
         return { archived: false };
       case 'archived':
         return { archived: true };
+      case 'deleted':
+        return { includeDeleted: true };
       default:
         return {};
     }
@@ -59,9 +61,13 @@ export function ArticleList() {
   const addArticleMutation = useAddArticle();
   const updateArticleMutation = useUpdateArticle();
   const deleteArticleMutation = useDeleteArticle();
+  const restoreArticleMutation = useRestoreArticle();
 
-  // Flatten paginated results
-  const articles = data?.pages.flatMap(page => page.items) || [];
+  // Flatten paginated results and filter based on current view
+  const allArticles = data?.pages.flatMap(page => page.items) || [];
+  const articles = currentFilter === 'deleted'
+    ? allArticles.filter(article => !!article.deletedAt)
+    : allArticles.filter(article => !article.deletedAt);
 
 
 
@@ -107,6 +113,12 @@ export function ArticleList() {
   const handleDelete = (url: string) => {
     if (confirm('Are you sure you want to delete this article?')) {
       deleteArticleMutation.mutate(url);
+    }
+  };
+
+  const handleRestore = (url: string) => {
+    if (confirm('Are you sure you want to restore this article?')) {
+      restoreArticleMutation.mutate(url);
     }
   };
 
@@ -230,6 +242,14 @@ export function ArticleList() {
               >
                 Archived
               </Button>
+              <Button
+                size="sm"
+                variant={currentFilter === 'deleted' ? 'default' : 'outline'}
+                onClick={() => setCurrentFilter('deleted')}
+                className="text-xs h-8"
+              >
+                Deleted
+              </Button>
             </div>
           </div>
 
@@ -253,6 +273,12 @@ export function ArticleList() {
                         <span>{article.domain}</span>
                         <span>•</span>
                         <span>{new Date(article.timestamp).toISOString().split('T')[0]}</span>
+                        {article.deletedAt && (
+                          <>
+                            <span>•</span>
+                            <span className="text-destructive">Deleted</span>
+                          </>
+                        )}
                         {article.syncStatus === 'pending' && (
                           <>
                             <span>•</span>
@@ -261,42 +287,60 @@ export function ArticleList() {
                         )}
                       </div>
                       <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(article)}
-                          className="text-muted-foreground hover:text-foreground p-1 h-8 w-8"
-                          title="Edit article"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleToggleFavorite(article.url, article.favorite)}
-                          className={`p-1 h-8 w-8 ${article.favorite ? 'text-accent hover:text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                          title={article.favorite ? "Remove from favorites" : "Add to favorites"}
-                        >
-                          <Star className={`w-4 h-4 ${article.favorite ? 'fill-current' : ''}`} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleToggleArchive(article.url, article.archived)}
-                          className="text-muted-foreground hover:text-foreground p-1 h-8 w-8"
-                          title={article.archived ? "Unarchive article" : "Archive article"}
-                        >
-                          {article.archived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(article.url)}
-                          className="text-destructive hover:text-destructive/80 p-1 h-8 w-8"
-                          title="Delete article"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {article.deletedAt ? (
+                          // Actions for deleted articles
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleRestore(article.url)}
+                              className="text-green-600 hover:text-green-700 p-1 h-8 w-8"
+                              title="Restore article"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          // Actions for regular articles
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEdit(article)}
+                              className="text-muted-foreground hover:text-foreground p-1 h-8 w-8"
+                              title="Edit article"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleToggleFavorite(article.url, article.favorite)}
+                              className={`p-1 h-8 w-8 ${article.favorite ? 'text-accent hover:text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                              title={article.favorite ? "Remove from favorites" : "Add to favorites"}
+                            >
+                              <Star className={`w-4 h-4 ${article.favorite ? 'fill-current' : ''}`} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleToggleArchive(article.url, article.archived)}
+                              className="text-muted-foreground hover:text-foreground p-1 h-8 w-8"
+                              title={article.archived ? "Unarchive article" : "Archive article"}
+                            >
+                              {article.archived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDelete(article.url)}
+                              className="text-destructive hover:text-destructive/80 p-1 h-8 w-8"
+                              title="Delete article"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                 </div>

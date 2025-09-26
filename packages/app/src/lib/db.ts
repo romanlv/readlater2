@@ -12,6 +12,7 @@ export interface Article {
   favorite: boolean;
   timestamp: number;        // When article was created (ms since epoch)
   editedAt?: number;        // When article was last modified (ms since epoch, optional)
+  deletedAt?: number;       // When article was soft deleted (ms since epoch, optional)
   syncStatus: 'synced' | 'pending';  // No 'conflict' - auto-resolved with LWW
 }
 
@@ -44,7 +45,7 @@ class ReadLaterDB extends Dexie {
     super('ReadLaterDB');
     this.version(1).stores({
       // Simplified single-field indexes for optimal performance
-      articles: 'url, timestamp, archived, favorite, domain, syncStatus, editedAt, *tags',
+      articles: 'url, timestamp, archived, favorite, domain, syncStatus, editedAt, deletedAt, *tags',
       syncQueue: 'id, timestamp, type, articleUrl'
     });
   }

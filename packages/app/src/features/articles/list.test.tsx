@@ -13,6 +13,7 @@ vi.mock('./hooks', () => ({
   useAddArticle: vi.fn(),
   useUpdateArticle: vi.fn(),
   useDeleteArticle: vi.fn(),
+  useRestoreArticle: vi.fn(),
 }));
 
 // Mock the sync hook
@@ -93,6 +94,9 @@ describe('ArticleList', () => {
     mockedHooks.useDeleteArticle.mockReturnValue({
       mutate: vi.fn(),
     } as ReturnType<typeof Hooks.useDeleteArticle>);
+    (mockedHooks as typeof Hooks).useRestoreArticle.mockReturnValue({
+      mutate: vi.fn(),
+    } as ReturnType<typeof Hooks.useRestoreArticle>);
 
     // Default sync hook mock
     mockedSyncHook.useSync.mockReturnValue({

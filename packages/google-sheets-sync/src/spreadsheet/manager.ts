@@ -150,7 +150,7 @@ export class GoogleSpreadsheetManager {
   private async addHeaders(token: string, spreadsheetId: string): Promise<void> {
     const body = { values: [SPREADSHEET_HEADERS] };
     await this._fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:K1?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:L1?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -170,7 +170,7 @@ export class GoogleSpreadsheetManager {
 
   async getAllRows(token: string, spreadsheetId: string): Promise<string[][]> {
     const result = await this._fetch<GoogleValueRange>(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A2:K`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A2:L`,
       { headers: { 'Authorization': `Bearer ${token}` } }
     );
     return result.values || [];
@@ -181,7 +181,7 @@ export class GoogleSpreadsheetManager {
 
     const body = { values: [values] };
     await this._fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${nextRow}:K${nextRow}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${nextRow}:L${nextRow}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -225,7 +225,7 @@ export class GoogleSpreadsheetManager {
   async updateRow(token: string, spreadsheetId: string, rowNumber: number, values: string[]): Promise<void> {
     const body = { values: [values] };
     await this._fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${rowNumber}:K${rowNumber}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A${rowNumber}:L${rowNumber}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },

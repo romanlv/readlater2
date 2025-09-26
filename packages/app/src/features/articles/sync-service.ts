@@ -218,13 +218,8 @@ export class SyncService {
         throw new Error('Remote data validation failed - aborting sync to prevent data loss');
       }
 
-      // Get current local state for atomic operations
-      const pendingOperations = await articleRepository.getPendingSyncOperations();
-      const pendingDeletes = new Set(
-        pendingOperations
-          .filter(op => op.type === 'delete')
-          .map(op => op.articleUrl)
-      );
+      // Future: Could use pending operations for more sophisticated conflict resolution
+      // const pendingOperations = await articleRepository.getPendingSyncOperations();
 
       const articlesToUpdate: Article[] = [];
       const processedUrls = new Set<string>();
@@ -233,12 +228,6 @@ export class SyncService {
       for (const remoteArticleData of remoteArticles) {
         if (!remoteArticleData.url) {
           console.warn('Skipping remote article with missing URL:', remoteArticleData);
-          continue;
-        }
-
-        // Skip articles that are pending deletion locally
-        if (pendingDeletes.has(remoteArticleData.url)) {
-          console.log(`Skipping remote article ${remoteArticleData.url} - pending local deletion`);
           continue;
         }
 
@@ -276,6 +265,26 @@ export class SyncService {
       // not be inferred from absence in the remote list.
 
       console.log(`Successfully synced ${processedUrls.size} articles from remote`);
+
+      // Run cleanup of old deleted articles after successful remote sync
+      try {
+        const localCleanedUp = await articleRepository.cleanupDeletedArticles(30);
+        if (localCleanedUp > 0) {
+          console.log(`Cleaned up ${localCleanedUp} old deleted articles from local storage`);
+        }
+
+        // Also cleanup Google Sheets
+        const syncEngine = initializeGoogleSheetsSync(this.config!);
+        if (typeof syncEngine.cleanupDeletedArticles === 'function') {
+          const remoteCleanedUp = await syncEngine.cleanupDeletedArticles(30);
+          if (remoteCleanedUp > 0) {
+            console.log(`Cleaned up ${remoteCleanedUp} old deleted articles from Google Sheets`);
+          }
+        }
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup old deleted articles:', cleanupError);
+        // Don't fail the sync if cleanup fails
+      }
 
     } catch (error) {
       console.error('Failed to sync from remote:', error);
@@ -333,8 +342,9 @@ export class SyncService {
       return local;
     }
 
-    const localTime = local.editedAt || local.timestamp;
-    const remoteTime = remote.editedAt || remote.timestamp;
+    // For conflict resolution, consider deletedAt as the most recent change timestamp
+    const localTime = local.deletedAt || local.editedAt || local.timestamp;
+    const remoteTime = remote.deletedAt || remote.editedAt || remote.timestamp;
 
     // Check for suspicious timestamp differences (more than 1 year apart)
     const timeDiffMs = Math.abs(localTime - remoteTime);
@@ -376,7 +386,8 @@ export class SyncService {
       notes: article.notes,
       archived: article.archived,
       favorite: article.favorite,
-      editedAt: article.editedAt ? new Date(article.editedAt).toISOString() : undefined
+      editedAt: article.editedAt ? new Date(article.editedAt).toISOString() : undefined,
+      deletedAt: article.deletedAt ? new Date(article.deletedAt).toISOString() : undefined
     };
   }
 
@@ -393,6 +404,7 @@ export class SyncService {
       archived: data.archived || false,
       favorite: data.favorite || false,
       editedAt: data.editedAt ? new Date(data.editedAt).getTime() : undefined,
+      deletedAt: data.deletedAt ? new Date(data.deletedAt).getTime() : undefined,
       syncStatus: 'synced'
     };
   }
