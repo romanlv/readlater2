@@ -255,7 +255,7 @@ export function ArticleList() {
 
           <ul className="mb-4 space-y-2">
             {articles.map((article) => (
-              <li key={article.url} className="p-3 border-b border-border">
+              <li key={article.url} className="py-3 border-b border-border">
                 <div className="flex flex-col">
                   <a
                     href={article.url}
@@ -272,17 +272,16 @@ export function ArticleList() {
                       <div className="flex items-center gap-2">
                         <span>{article.domain}</span>
                         <span>•</span>
-                        <span>{new Date(article.timestamp).toISOString().split('T')[0]}</span>
+                        <div className="flex items-center gap-1">
+                          <span>{new Date(article.timestamp).toISOString().split('T')[0]}</span>
+                          {article.syncStatus === 'pending' && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" title="Pending sync" />
+                          )}
+                        </div>
                         {article.deletedAt && (
                           <>
                             <span>•</span>
                             <span className="text-destructive">Deleted</span>
-                          </>
-                        )}
-                        {article.syncStatus === 'pending' && (
-                          <>
-                            <span>•</span>
-                            <span className="text-accent-foreground">Pending sync</span>
                           </>
                         )}
                       </div>

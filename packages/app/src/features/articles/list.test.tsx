@@ -204,8 +204,8 @@ describe('ArticleList', () => {
       </TestWrapper>
     );
 
-    // Check for the individual article's pending sync status
-    expect(screen.queryByText('Pending sync')).toBeTruthy();
+    // Check for the individual article's pending sync status (small dot)
+    expect(screen.getByTitle('Pending sync')).toBeTruthy();
     // Check that the article list shows the article
     expect(await screen.findByText('Test Article')).toBeTruthy();
   });
