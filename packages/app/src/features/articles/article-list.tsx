@@ -9,6 +9,9 @@ import { config } from '@/config';
 import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw } from 'lucide-react';
 import { ArticleFilters } from './repository';
 import { ThemeSwitcher } from '@/components/theme-switcher';
+import { extractYouTubeVideoId } from '@/lib/youtube';
+import { encodeArticleUrl } from '@/lib/url-encode';
+import { useNavigate } from 'react-router';
 
 // Hook to track online/offline status
 function useOnlineStatus() {
@@ -41,6 +44,7 @@ export function ArticleList() {
   const [newArticleData, setNewArticleData] = useState<Partial<ArticleFormData> | null>(null);
   const [currentFilter, setCurrentFilter] = useState<FilterType>('active');
   const isOnline = useOnlineStatus();
+  const navigate = useNavigate();
 
   // Convert filter type to ArticleFilters
   const getFilters = (): ArticleFilters => {
@@ -173,6 +177,15 @@ export function ArticleList() {
     setNewArticleData(null);
   };
 
+  const handleArticleClick = (e: React.MouseEvent<HTMLAnchorElement>, article: Article) => {
+    const videoId = extractYouTubeVideoId(article.url);
+    if (videoId) {
+      e.preventDefault();
+      const encodedUrl = encodeArticleUrl(article.url);
+      navigate(`/article/${encodedUrl}`);
+    }
+  };
+
   if (error) {
     return (
       <div className="container max-w-2xl mx-auto p-4 min-h-screen bg-background text-foreground">
@@ -262,6 +275,7 @@ export function ArticleList() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-foreground hover:underline font-medium break-words"
+                    onClick={(e) => handleArticleClick(e, article)}
                   >
                     {article.title}
                   </a>

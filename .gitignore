@@ -4,3 +4,4 @@ config.js
 .opencode/*
 node_modules
 dist
+docs/memory

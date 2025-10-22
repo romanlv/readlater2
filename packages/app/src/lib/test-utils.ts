@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
+import { MemoryRouter } from 'react-router';
 
-// Test wrapper with QueryClient for components that use React Query
+// Test wrapper with QueryClient and Router for components that use React Query and routing
 export function TestWrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -9,5 +10,9 @@ export function TestWrapper({ children }: { children: React.ReactNode }) {
       mutations: { retry: false },
     },
   });
-  return React.createElement(QueryClientProvider, { client: queryClient }, children);
+  return React.createElement(
+    QueryClientProvider,
+    { client: queryClient },
+    React.createElement(MemoryRouter, {}, children)
+  );
 }
