@@ -7,6 +7,7 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "tsc -b && vite build",
+    "build:zip": "pnpm build && cd dist && zip -r ../readlater-extension.zip . && cd ..",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest"
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.2",
     "@eslint/js": "^9.29.0",
+    "eslint": "^9.30.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",

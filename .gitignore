@@ -4,4 +4,6 @@ config.js
 .opencode/*
 node_modules
 dist
-docs/memory
+/docs/memory
+/packages/app/public/readlater-extension.zip
+/packages/extension/readlater-extension.zip

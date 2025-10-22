@@ -9,6 +9,7 @@ import { config } from '@/config';
 import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw } from 'lucide-react';
 import { ArticleFilters } from './repository';
 import { ThemeSwitcher } from '@/components/theme-switcher';
+import { ExtensionDownloadLink } from '@/components/extension-download-link';
 import { extractYouTubeVideoId } from '@/lib/youtube';
 import { encodeArticleUrl } from '@/lib/url-encode';
 import { useNavigate } from 'react-router';
@@ -202,7 +203,8 @@ export function ArticleList() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1" />
         <h1 className="text-2xl font-bold">Read It Later 2.0b</h1>
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-end items-center gap-2">
+          <ExtensionDownloadLink />
           <ThemeSwitcher />
         </div>
       </div>
