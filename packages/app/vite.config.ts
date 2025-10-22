@@ -25,7 +25,7 @@ export default mergeConfig(defineConfig({
       theme_color: '#1976d2',
       background_color: '#ffffff',
       display: 'standalone',
-      start_url: process.env.VITE_BASE_PATH || '/',
+      start_url: basePath,
 
       icons: [{
         src: 'pwa-64x64.png',
@@ -47,7 +47,7 @@ export default mergeConfig(defineConfig({
       }],
 
       share_target: {
-        action: process.env.VITE_BASE_PATH || '/',
+        action: basePath,
         method: 'POST',
         enctype: 'multipart/form-data',
         params: {
