@@ -151,7 +151,7 @@ describe('Share Target Feature', () => {
     if (saveButton) {
       await user.click(saveButton);
       // After clicking, the share target should close and go back to article list
-      expect(await screen.findByText('Read It Later 2.0b')).toBeTruthy();
+      expect(await screen.findByText('Read It Later 2')).toBeTruthy();
     }
   });
 
@@ -200,7 +200,7 @@ describe('Share Target Feature', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Read It Later 2.0b')).toBeTruthy();
+    expect(await screen.findByText('Read It Later 2')).toBeTruthy();
   });
 
   test.skip('correctly decodes URL parameters', async () => {
