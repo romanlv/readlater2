@@ -29,7 +29,12 @@ if (import.meta.env.DEV)
 // Handle Web Share Target BEFORE NavigationRoute
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  
+
+  // Bypass service worker for download files
+  if (url.pathname.endsWith('.zip')) {
+    return;
+  }
+
   // Only log relevant requests to avoid spam
   if (event.request.method === 'POST' || url.pathname === '/') {
     swLog('Fetch event:', event.request.method, event.request.url);
