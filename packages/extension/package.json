@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc -b && vite build",
     "build:crx": "pnpm build && npx crx3 dist -p key.pem -o readlater-extension.crx && echo '\n✓ CRX file created: readlater-extension.crx\n✓ Extension ID: gpbkdccfljeoegmhecfogpidmogaibbm'",
+    "build:zip": "pnpm build && cd dist && zip -r ../readlater-extension.zip . && cd .. && echo '\n✓ ZIP file created: readlater-extension.zip'",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest"
