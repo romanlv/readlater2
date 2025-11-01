@@ -7,7 +7,7 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "tsc -b && vite build",
-    "build:zip": "pnpm build && cd dist && zip -r ../readlater-extension.zip . && cd ..",
+    "build:crx": "pnpm build && npx crx3 dist -p key.pem -o readlater-extension.crx && echo '\n✓ CRX file created: readlater-extension.crx\n✓ Extension ID: gpbkdccfljeoegmhecfogpidmogaibbm'",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest"
@@ -28,7 +28,6 @@
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.2",
     "@eslint/js": "^9.29.0",
-    "eslint": "^9.30.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -36,6 +35,8 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
+    "crx3": "^1.1.3",
+    "eslint": "^9.30.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",

@@ -1,3 +1,7 @@
+# CRX generation 
+
+crx is generated locally, key.pem is saved in bitwarden as a backup
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

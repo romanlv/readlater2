@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Extension packaging
+*.pem
+*.crx
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
