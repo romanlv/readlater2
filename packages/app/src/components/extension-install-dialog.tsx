@@ -13,7 +13,7 @@ export function ExtensionInstallDialog({ open, onOpenChange, downloadUrl }: Exte
     // Trigger download
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.download = 'readlater-extension.crx';
+    link.download = 'readlater-extension.zip';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -38,7 +38,7 @@ export function ExtensionInstallDialog({ open, onOpenChange, downloadUrl }: Exte
               <div>
                 <p className="font-medium">Download the extension</p>
                 <p className="text-sm text-muted-foreground">
-                  Click the download button below to get the extension CRX file
+                  Click the download button below to get the extension ZIP file
                 </p>
               </div>
             </div>
@@ -46,6 +46,18 @@ export function ExtensionInstallDialog({ open, onOpenChange, downloadUrl }: Exte
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
                 2
+              </div>
+              <div>
+                <p className="font-medium">Extract the ZIP file</p>
+                <p className="text-sm text-muted-foreground">
+                  Unzip the downloaded file to a folder on your computer
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                3
               </div>
               <div>
                 <p className="font-medium">Open Chrome Extensions</p>
@@ -57,7 +69,7 @@ export function ExtensionInstallDialog({ open, onOpenChange, downloadUrl }: Exte
 
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                3
+                4
               </div>
               <div>
                 <p className="font-medium">Enable Developer Mode</p>
@@ -69,19 +81,19 @@ export function ExtensionInstallDialog({ open, onOpenChange, downloadUrl }: Exte
 
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                4
+                5
               </div>
               <div>
-                <p className="font-medium">Install the extension</p>
+                <p className="font-medium">Load the extension</p>
                 <p className="text-sm text-muted-foreground">
-                  Drag and drop the downloaded CRX file onto the extensions page, or click on the downloaded CRX file
+                  Click "Load unpacked" and select the extracted folder
                 </p>
               </div>
             </div>
 
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                5
+                6
               </div>
               <div>
                 <p className="font-medium">Start saving articles!</p>

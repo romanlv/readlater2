@@ -5,7 +5,7 @@ import { ExtensionInstallDialog } from './extension-install-dialog';
 
 export function ExtensionDownloadLink() {
   const [showDialog, setShowDialog] = useState(false);
-  const extensionUrl = `${import.meta.env.BASE_URL}readlater-extension.crx`;
+  const extensionUrl = `${import.meta.env.BASE_URL}readlater-extension.zip`;
 
   return (
     <>

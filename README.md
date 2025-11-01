@@ -25,6 +25,7 @@ The core system is working and deployed. Both the Chrome extension and PWA are f
 - Cursor-based pagination for performance
 - Dark mode support
 - YouTube video support with embedded player
+- Share links via "Share to ReadLater2" on Android (iOS not supported)
 - Deployed to GitHub Pages with CI/CD
 
 **Sync Engine** (Complete)
@@ -221,8 +222,6 @@ See [docs/testing-guide.md](docs/testing-guide.md) for detailed testing guidance
 
 **PWA:** Auto-deploys to GitHub Pages on push to `main` branch
 **Extension:** Manual build with `pnpm ext build:crx` creates `readlater-extension.crx`
-
-The PWA is live at: [your-github-pages-url]
 
 ## What's Next?
 

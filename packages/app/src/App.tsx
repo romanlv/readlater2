@@ -11,6 +11,8 @@ import { ThemeProvider } from "@/hooks/use-theme"
 import { AppRouter } from "@/router"
 
 function AppContent() {
+  const isDebugMode = new URLSearchParams(window.location.search).get('debug') === 'true';
+
   useEffect(() => {
     // Configure sync service
     syncService.configure(config);
@@ -26,7 +28,7 @@ function AppContent() {
     <>
       <AppRouter />
       <PWABadge />
-      <DebugPanel />
+      {isDebugMode && <DebugPanel />}
       <BuildInfo className="fixed bottom-2 left-1/2 transform -translate-x-1/2" />
       <ReactQueryDevtools initialIsOpen={false} />
     </>

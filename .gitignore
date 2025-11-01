@@ -5,4 +5,5 @@ config.js
 node_modules
 dist
 /docs/memory
-/packages/app/public/readlater-extension.crx
+/packages/app/public/readlater-extension.zip
+/packages/extension/readlater-extension.zip

@@ -35,11 +35,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Create extension signing key
-        run: |
-          echo "${{ secrets.EXTENSION_SIGNING_KEY }}" > packages/extension/key.pem
-          chmod 600 packages/extension/key.pem
-
       - name: build libs
         run: pnpm build:libs
         
