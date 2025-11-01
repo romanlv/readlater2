@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ArticleList } from './article-list';
 import * as Hooks from './hooks';
@@ -135,7 +135,7 @@ describe('ArticleList', () => {
     expect(screen.queryByText('Offline mode:')).toBeTruthy();
   });
 
-  test('allows adding new articles', async () => {
+  test('allows adding new articles via + button', async () => {
     const mockMutate = vi.fn();
     mockedHooks.useAddArticle.mockReturnValue({
       mutate: mockMutate,
@@ -149,26 +149,26 @@ describe('ArticleList', () => {
       </TestWrapper>
     );
 
-    const input = screen.queryByPlaceholderText('Enter URL') as HTMLInputElement;
-    const addButton = screen.queryByText('Add URL');
-    expect(input).toBeTruthy();
-    expect(addButton).toBeTruthy();
+    // Click the + button
+    const addButton = await screen.findByTitle('Add new article (Cmd+V)');
+    await user.click(addButton);
 
-    await user.type(input, 'https://example.com/new-article');
-    await user.click(addButton!);
-
-    // Should now show the confirmation dialog
-    const saveButton = await screen.findByRole('button', { name: 'Save Article' });
-    const urlInput = screen.queryByLabelText('URL') as HTMLInputElement;
+    // Should show the add dialog
+    const urlInput = await screen.findByLabelText('URL') as HTMLInputElement;
+    const titleInput = await screen.findByLabelText('Title') as HTMLInputElement;
     expect(urlInput).toBeTruthy();
-    expect(urlInput.value).toBe('https://example.com/new-article');
+    expect(titleInput).toBeTruthy();
 
-    // Click save to actually add the article
+    // Enter URL and title
+    await user.type(urlInput, 'https://example.com/new-article');
+    await user.type(titleInput, 'New Article Title');
+
+    const saveButton = screen.getByRole('button', { name: 'Save Article' });
     await user.click(saveButton);
 
     expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({
       url: 'https://example.com/new-article',
-      title: 'https://example.com/new-article',
+      title: 'New Article Title',
       syncStatus: 'pending',
     }));
   });
@@ -352,6 +352,156 @@ describe('ArticleList', () => {
     expect(mockUpdateMutate).toHaveBeenCalledWith({
       url: 'https://example.com',
       updates: { archived: true },
+    });
+  });
+
+  describe('Paste shortcut', () => {
+    const mockReadText = vi.fn();
+
+    beforeEach(() => {
+      // Mock clipboard API
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          readText: mockReadText,
+        },
+        writable: true,
+        configurable: true,
+      });
+      mockReadText.mockClear();
+    });
+
+    test('opens add dialog with URL from clipboard when cmd+v is pressed', async () => {
+      mockReadText.mockResolvedValue('https://example.com/pasted-url');
+
+      render(
+        <TestWrapper>
+          <ArticleList />
+        </TestWrapper>
+      );
+
+      // Press cmd+v (on Mac) - use fireEvent to trigger native keyboard event
+      fireEvent.keyDown(window, { key: 'v', metaKey: true });
+
+      // Should show the add dialog with clipboard URL
+      const urlInput = await screen.findByLabelText('URL') as HTMLInputElement;
+      expect(urlInput).toBeTruthy();
+
+      // Wait for clipboard to be read and dialog to update
+      await vi.waitFor(() => {
+        expect(urlInput.value).toBe('https://example.com/pasted-url');
+      });
+    });
+
+    test('opens add dialog with URL from clipboard when ctrl+v is pressed', async () => {
+      mockReadText.mockResolvedValue('https://example.com/pasted-url');
+
+      render(
+        <TestWrapper>
+          <ArticleList />
+        </TestWrapper>
+      );
+
+      // Press ctrl+v (on Windows/Linux) - use fireEvent to trigger native keyboard event
+      fireEvent.keyDown(window, { key: 'v', ctrlKey: true });
+
+      // Should show the add dialog with clipboard URL
+      const urlInput = await screen.findByLabelText('URL') as HTMLInputElement;
+      expect(urlInput).toBeTruthy();
+
+      // Wait for clipboard to be read and dialog to update
+      await vi.waitFor(() => {
+        expect(urlInput.value).toBe('https://example.com/pasted-url');
+      });
+    });
+
+    test('opens add dialog with empty URL when clipboard contains invalid URL', async () => {
+      mockReadText.mockResolvedValue('not a valid url');
+
+      render(
+        <TestWrapper>
+          <ArticleList />
+        </TestWrapper>
+      );
+
+      fireEvent.keyDown(window, { key: 'v', metaKey: true });
+
+      // Should show the add dialog with empty URL
+      const urlInput = await screen.findByLabelText('URL') as HTMLInputElement;
+      expect(urlInput).toBeTruthy();
+      expect(urlInput.value).toBe('');
+    });
+
+    test('opens add dialog when clipboard access fails', async () => {
+      mockReadText.mockRejectedValue(new Error('Clipboard access denied'));
+
+      render(
+        <TestWrapper>
+          <ArticleList />
+        </TestWrapper>
+      );
+
+      fireEvent.keyDown(window, { key: 'v', metaKey: true });
+
+      // Should still show the add dialog with empty URL
+      const urlInput = await screen.findByLabelText('URL') as HTMLInputElement;
+      expect(urlInput).toBeTruthy();
+      expect(urlInput.value).toBe('');
+    });
+
+    test('does not trigger paste shortcut when typing in input field', async () => {
+      mockReadText.mockResolvedValue('https://example.com/pasted-url');
+
+      const user = userEvent.setup();
+      render(
+        <TestWrapper>
+          <ArticleList />
+        </TestWrapper>
+      );
+
+      // First open the dialog
+      const addButton = await screen.findByTitle('Add new article (Cmd+V)');
+      await user.click(addButton);
+
+      // Focus on the URL input
+      const urlInput = await screen.findByLabelText('URL') as HTMLInputElement;
+      await user.click(urlInput);
+
+      // Clear the clipboard mock call count
+      mockReadText.mockClear();
+
+      // Press cmd+v while focused on input (should paste normally, not trigger our handler)
+      await user.keyboard('{Meta>}v{/Meta}');
+
+      // Clipboard should not be read by our handler
+      expect(mockReadText).not.toHaveBeenCalled();
+    });
+
+    test('does not trigger paste shortcut when typing in textarea', async () => {
+      mockReadText.mockResolvedValue('https://example.com/pasted-url');
+
+      const user = userEvent.setup();
+      render(
+        <TestWrapper>
+          <ArticleList />
+        </TestWrapper>
+      );
+
+      // First open the dialog
+      const addButton = await screen.findByTitle('Add new article (Cmd+V)');
+      await user.click(addButton);
+
+      // Focus on the notes textarea
+      const notesTextarea = await screen.findByLabelText('Notes') as HTMLTextAreaElement;
+      await user.click(notesTextarea);
+
+      // Clear the clipboard mock call count
+      mockReadText.mockClear();
+
+      // Press cmd+v while focused on textarea (should paste normally, not trigger our handler)
+      await user.keyboard('{Meta>}v{/Meta}');
+
+      // Clipboard should not be read by our handler
+      expect(mockReadText).not.toHaveBeenCalled();
     });
   });
 });

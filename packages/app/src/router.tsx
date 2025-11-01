@@ -6,6 +6,7 @@ import { useAddArticle } from '@/features/articles/hooks';
 import { ArticleFormData } from '@/features/articles/article-edit-form';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useEffect } from 'react';
+import { cleanUrl } from '@/lib/url-cleaner';
 
 function ShareTargetRoute() {
   const [searchParams] = useSearchParams();
@@ -40,13 +41,16 @@ function ShareTargetRoute() {
   }
 
   const handleSaveSharedArticle = (formData: ArticleFormData) => {
+    // Clean URL to remove tracking parameters
+    const cleanedUrl = cleanUrl(formData.url);
+
     const article = {
-      url: formData.url,
+      url: cleanedUrl,
       title: formData.title,
       description: formData.description,
       featuredImage: '',
       timestamp: Date.now(),
-      domain: new URL(formData.url).hostname,
+      domain: new URL(cleanedUrl).hostname,
       tags: formData.tags,
       notes: formData.notes,
       archived: false,

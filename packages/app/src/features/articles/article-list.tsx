@@ -6,13 +6,14 @@ import { usePaginatedArticles, useAddArticle, useUpdateArticle, useDeleteArticle
 import { Article } from '@/lib/db';
 import { SyncStatus } from './sync-status';
 import { config } from '@/config';
-import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw } from 'lucide-react';
+import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw, Plus } from 'lucide-react';
 import { ArticleFilters } from './repository';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ExtensionDownloadLink } from '@/components/extension-download-link';
 import { extractYouTubeVideoId } from '@/lib/youtube';
 import { encodeArticleUrl } from '@/lib/url-encode';
 import { useNavigate } from 'react-router';
+import { cleanUrl, isValidUrl } from '@/lib/url-cleaner';
 
 // Hook to track online/offline status
 function useOnlineStatus() {
@@ -38,7 +39,6 @@ function useOnlineStatus() {
 type FilterType = 'all' | 'active' | 'archived' | 'deleted';
 
 export function ArticleList() {
-  const [urlInput, setUrlInput] = useState('');
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -77,29 +77,65 @@ export function ArticleList() {
 
 
 
-  const addArticle = () => {
-    const url = urlInput.trim();
-    if (!url) return;
+  const openAddDialog = (url?: string) => {
+    const trimmedUrl = url?.trim() || '';
+    // Clean URL to remove tracking parameters
+    const urlToAdd = trimmedUrl && isValidUrl(trimmedUrl) ? cleanUrl(trimmedUrl) : trimmedUrl;
 
-    try {
-      // Validate URL
-      new URL(url);
-
-      // Show confirmation form instead of directly adding
-      setNewArticleData({
-        url,
-        title: url, // Default to URL, user can edit
-        description: '',
-        notes: '',
-        tags: []
-      });
-      setIsAddingNew(true);
-      setUrlInput('');
-    } catch (error) {
-      console.error('Invalid URL:', error);
-      alert('Please enter a valid URL');
-    }
+    setNewArticleData({
+      url: urlToAdd,
+      title: urlToAdd, // Default to URL, user can edit
+      description: '',
+      notes: '',
+      tags: []
+    });
+    setIsAddingNew(true);
   };
+
+  // Handle paste shortcut (cmd+v on Mac, ctrl+v on Windows/Linux)
+  useEffect(() => {
+    const handlePaste = async (e: KeyboardEvent) => {
+      // Check if cmd+v (Mac) or ctrl+v (Windows/Linux) is pressed
+      const isModifierPressed = e.metaKey || e.ctrlKey;
+
+      if (isModifierPressed && e.key === 'v') {
+        // Don't interfere if user is typing in an input/textarea
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+          return;
+        }
+
+        // Prevent default paste behavior
+        e.preventDefault();
+
+        try {
+          // Read from clipboard
+          const text = await navigator.clipboard.readText();
+          const trimmedText = text.trim();
+
+          // If clipboard contains a URL, open dialog with it
+          if (trimmedText) {
+            try {
+              new URL(trimmedText);
+              openAddDialog(trimmedText);
+            } catch {
+              // If not a valid URL, just open the dialog empty
+              openAddDialog();
+            }
+          } else {
+            openAddDialog();
+          }
+        } catch (error) {
+          console.error('Failed to read clipboard:', error);
+          // If clipboard access fails, just open the dialog
+          openAddDialog();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handlePaste);
+    return () => window.removeEventListener('keydown', handlePaste);
+  }, []);
 
   const loadMore = () => {
     if (hasNextPage && !isFetching) {
@@ -154,13 +190,16 @@ export function ArticleList() {
   };
 
   const handleSaveNewArticle = (formData: ArticleFormData) => {
+    // Clean URL one more time before saving to ensure no tracking params
+    const cleanedUrl = cleanUrl(formData.url);
+
     const article = {
-      url: formData.url,
+      url: cleanedUrl,
       title: formData.title,
       description: formData.description,
       featuredImage: '',
       timestamp: Date.now(),
-      domain: new URL(formData.url).hostname,
+      domain: new URL(cleanedUrl).hostname,
       tags: formData.tags,
       notes: formData.notes,
       archived: false,
@@ -204,6 +243,15 @@ export function ArticleList() {
         <div className="flex-1" />
         <h1 className="text-2xl font-bold">Read Later²</h1>
         <div className="flex-1 flex justify-end items-center gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => openAddDialog()}
+            className="h-8 w-8 p-0"
+            title="Add new article (Cmd+V)"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
           <ExtensionDownloadLink />
           <ThemeSwitcher />
         </div>
@@ -374,25 +422,6 @@ export function ArticleList() {
               </Button>
             </div>
           )}
-
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="Enter URL"
-              className="flex-1 px-3 py-2 border border-input rounded-l-md focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
-              onKeyDown={(e) => e.key === 'Enter' && addArticle()}
-            />
-            <Button
-              onClick={addArticle}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-l-none"
-              disabled={addArticleMutation.isPending}
-              title={!isOnline ? 'Article will be saved locally and synced when online' : ''}
-            >
-              {addArticleMutation.isPending ? 'Adding...' : 'Add URL'}
-            </Button>
-          </div>
         </>
       )}
 
