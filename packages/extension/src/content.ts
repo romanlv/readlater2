@@ -1,1 +1,1 @@
-console.log('ReadLater content script loaded');
+console.log('Read Later² content script loaded');

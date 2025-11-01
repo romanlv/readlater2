@@ -18,8 +18,8 @@ export default mergeConfig(defineConfig({
     registerType: 'autoUpdate',
     injectRegister: false,
     manifest: {
-      name: 'Read It Later',
-      short_name: 'ReadLater',
+      name: 'Read Later²',
+      short_name: 'ReadLater2',
       description: 'Save articles to read later with Google Sheets sync',
       id: basePath,
       scope: basePath,

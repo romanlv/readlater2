@@ -190,7 +190,7 @@ export function ArticleList() {
   if (error) {
     return (
       <div className="container max-w-2xl mx-auto p-4 min-h-screen bg-background text-foreground">
-        <h1 className="text-2xl font-bold text-center mb-4">Read It Later 2</h1>
+        <h1 className="text-2xl font-bold text-center mb-4">Read Later²</h1>
         <div className="text-destructive text-center">
           Error loading articles: {error.message}
         </div>
@@ -202,7 +202,7 @@ export function ArticleList() {
     <div className="container max-w-2xl mx-auto p-4 min-h-screen bg-background text-foreground">
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1" />
-        <h1 className="text-2xl font-bold">Read It Later 2</h1>
+        <h1 className="text-2xl font-bold">Read Later²</h1>
         <div className="flex-1 flex justify-end items-center gap-2">
           <ExtensionDownloadLink />
           <ThemeSwitcher />

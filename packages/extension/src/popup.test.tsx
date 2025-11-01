@@ -53,7 +53,7 @@ describe('Popup Rendering', () => {
     })
 
     // Check essential elements exist without full DOM assertion
-    expect(screen.queryByText('ReadLater')).toBeTruthy()
+    expect(screen.queryByText('Read Later²')).toBeTruthy()
     expect(screen.queryByText('https://example.com/article')).toBeTruthy()
     expect(screen.queryByLabelText('Tags (comma-separated)')).toBeTruthy()
     expect(screen.queryByLabelText('Notes')).toBeTruthy()

@@ -103,7 +103,7 @@ export default function Popup() {
         <div className="flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded text-xs font-bold">
           <BookOpen className="w-3 h-3" />
         </div>
-        ReadLater
+        Read Later²
       </div>
       
       <div className="space-y-4">

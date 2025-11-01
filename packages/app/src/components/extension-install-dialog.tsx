@@ -23,7 +23,7 @@ export function ExtensionInstallDialog({ open, onOpenChange, downloadUrl }: Exte
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Install ReadLater Chrome Extension</DialogTitle>
+          <DialogTitle>Install Read Later² Chrome Extension</DialogTitle>
           <p className="text-sm text-muted-foreground mt-2">
             Follow these steps to install the extension in Chrome
           </p>
@@ -86,7 +86,7 @@ export function ExtensionInstallDialog({ open, onOpenChange, downloadUrl }: Exte
               <div>
                 <p className="font-medium">Start saving articles!</p>
                 <p className="text-sm text-muted-foreground">
-                  The ReadLater extension is now installed and ready to use
+                  The Read Later² extension is now installed and ready to use
                 </p>
               </div>
             </div>
