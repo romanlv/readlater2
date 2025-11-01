@@ -234,6 +234,81 @@ describe('ArticleList', () => {
     expect(mockFetchNextPage).toHaveBeenCalled();
   });
 
+  test('hides load more button when no more pages', async () => {
+    mockedHooks.usePaginatedArticles.mockReturnValue({
+      data: { pages: [{ items: mockArticles, hasMore: false }] },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetching: false,
+      isLoading: false,
+      error: null,
+    } as ReturnType<typeof Hooks.usePaginatedArticles>);
+
+    render(
+      <TestWrapper>
+        <ArticleList />
+      </TestWrapper>
+    );
+
+    // Load more button should not be visible
+    expect(screen.queryByText('Load More')).toBeNull();
+  });
+
+  test('shows loading state in load more button', async () => {
+    mockedHooks.usePaginatedArticles.mockReturnValue({
+      data: { pages: [{ items: mockArticles, hasMore: true }] },
+      fetchNextPage: vi.fn(),
+      hasNextPage: true,
+      isFetching: true,
+      isLoading: false,
+      error: null,
+    } as ReturnType<typeof Hooks.usePaginatedArticles>);
+
+    render(
+      <TestWrapper>
+        <ArticleList />
+      </TestWrapper>
+    );
+
+    const loadMoreButton = (await screen.findByText('Loading...')) as HTMLButtonElement;
+    expect(loadMoreButton).toBeTruthy();
+    expect(loadMoreButton.disabled).toBe(true);
+  });
+
+  test('handles multiple pages of articles', async () => {
+    const page1Articles = [
+      { ...mockArticles[0], url: 'https://example.com/1', title: 'Article 1' }
+    ];
+    const page2Articles = [
+      { ...mockArticles[0], url: 'https://example.com/2', title: 'Article 2' }
+    ];
+
+    mockedHooks.usePaginatedArticles.mockReturnValue({
+      data: {
+        pages: [
+          { items: page1Articles, hasMore: true },
+          { items: page2Articles, hasMore: false }
+        ]
+      },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetching: false,
+      isLoading: false,
+      error: null,
+    } as ReturnType<typeof Hooks.usePaginatedArticles>);
+
+    render(
+      <TestWrapper>
+        <ArticleList />
+      </TestWrapper>
+    );
+
+    // Both articles from different pages should be displayed
+    expect(await screen.findByText('Article 1')).toBeTruthy();
+    expect(screen.queryByText('Article 2')).toBeTruthy();
+    expect(screen.queryByText('2 articles • Offline ready')).toBeTruthy();
+  });
+
   test('handles favorite button click', async () => {
     const mockUpdateMutate = vi.fn();
     mockedHooks.useUpdateArticle.mockReturnValue({

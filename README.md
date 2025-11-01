@@ -15,14 +15,14 @@ The core system is working and deployed. Both the Chrome extension and PWA are f
 - Direct Google Sheets sync with OAuth 2.0
 - CRX packaged with stable extension ID
 
-**PWA Application** (Core Complete - 80% Done)
+**PWA Application** (Core Complete - 85% Done)
 - Full offline functionality with IndexedDB
 - CRUD operations (create, read, update, delete)
 - Google Sheets sync with OAuth 2.0
 - Manual "Sync Now" with Last-Write-Wins conflict resolution
 - Search with relevance scoring
 - Advanced filtering (tags, domain, archived, favorite)
-- Cursor-based pagination for performance
+- Cursor-based pagination with "Load More" UI
 - Dark mode support
 - YouTube video support with embedded player
 - Share links via "Share to ReadLater2" on Android (iOS not supported)
@@ -37,7 +37,6 @@ The core system is working and deployed. Both the Chrome extension and PWA are f
 ### ⏳ In Progress (Polish & UX)
 
 - Debounced auto-sync (infrastructure ready, not active)
-- "Load more" pagination UI (repo supports it, UI pending)
 - Filter controls in UI (filters work, not exposed yet)
 - Sync progress indicators with pending change counts
 - App lifecycle sync (on close/background)
@@ -206,6 +205,7 @@ Comprehensive docs available in `docs/`:
 
 6 test files covering critical functionality:
 - Article repository (CRUD, pagination, search, filtering)
+- Article list component (load more, filtering, CRUD operations)
 - Sync service (conflict resolution, queue management)
 - Google Sheets integration
 - Component rendering
@@ -232,7 +232,6 @@ If you're picking up this project:
 3. **Check progress:** See [tasks.md](docs/tasks.md) for current state
 4. **Next priorities:**
    - Enable debounced auto-sync (code ready, just needs activation)
-   - Add "load more" UI for pagination
    - Expose filter controls in UI
    - Implement app lifecycle sync
 
