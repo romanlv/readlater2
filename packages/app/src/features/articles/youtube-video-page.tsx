@@ -34,6 +34,28 @@ export function YouTubeVideoPage() {
     }
   }, [debouncedNotes, articleUrl, article, updateArticleMutation]);
 
+  // Save notes on unmount if there are unsaved changes
+  useEffect(() => {
+    return () => {
+      if (article && notes !== (article.notes || '')) {
+        updateArticleMutation.mutate({
+          url: articleUrl,
+          updates: { notes, editedAt: Date.now() }
+        });
+      }
+    };
+  }, [notes, articleUrl, article, updateArticleMutation]);
+
+  // Save notes immediately when textarea loses focus
+  const handleNotesBlur = () => {
+    if (article && notes !== (article.notes || '')) {
+      updateArticleMutation.mutate({
+        url: articleUrl,
+        updates: { notes, editedAt: Date.now() }
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container max-w-4xl mx-auto p-4 min-h-screen bg-background text-foreground">
@@ -105,6 +127,7 @@ export function YouTubeVideoPage() {
             id="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
+            onBlur={handleNotesBlur}
             placeholder="Add your notes here..."
             className="w-full min-h-[200px] px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground resize-y"
           />
