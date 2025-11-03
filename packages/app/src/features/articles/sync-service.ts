@@ -1,7 +1,8 @@
 import { Article, SyncOperation } from '../../lib/db.js';
 import { ArticleData, GoogleSheetsConfig } from './types.js';
 import { initializeGoogleSheetsSync, AuthenticationRequiredError, getAuthProvider } from './google-sheets.js';
-import { articleRepository } from './repository.js';
+import { articleRepository, ArticleRepository } from './repository.js';
+import type { GoogleSheetsSyncEngine, PwaAuthProvider } from '@readlater/google-sheets-sync';
 
 export type SyncStatus = 'idle' | 'syncing' | 'error' | 'auth-required';
 
@@ -28,6 +29,12 @@ interface SyncQueueResult {
 // Sync timeout configuration
 const SYNC_TIMEOUT_MS = 120000; // 2 minutes
 
+/**
+ * Service for synchronizing articles with Google Sheets.
+ *
+ * Dependencies can be injected via constructor for testing purposes.
+ * Production code should use the exported singleton instance.
+ */
 export class SyncService {
   private syncState: SyncState = {
     status: 'idle',
@@ -37,7 +44,20 @@ export class SyncService {
   private listeners: ((state: SyncState) => void)[] = [];
   private config: GoogleSheetsConfig | null = null;
 
-  constructor() {
+  /**
+   * Creates a new SyncService instance.
+   *
+   * @param repository - Article repository for local storage operations (default: singleton instance)
+   * @param syncEngineFactory - Factory function to create sync engine instances (default: initializeGoogleSheetsSync)
+   * @param authProviderGetter - Function to get auth provider (default: getAuthProvider)
+   * @param timeoutMs - Sync timeout in milliseconds (default: 120000)
+   */
+  constructor(
+    private readonly repository: ArticleRepository = articleRepository,
+    private readonly syncEngineFactory: (config: GoogleSheetsConfig) => GoogleSheetsSyncEngine = initializeGoogleSheetsSync,
+    private readonly authProviderGetter: () => PwaAuthProvider = getAuthProvider,
+    private readonly timeoutMs: number = SYNC_TIMEOUT_MS
+  ) {
     this.updatePendingCount();
   }
 
@@ -66,7 +86,7 @@ export class SyncService {
 
   private async updatePendingCount(): Promise<void> {
     try {
-      const pendingCount = await articleRepository.getPendingArticlesCount();
+      const pendingCount = await this.repository.getPendingArticlesCount();
       this.setState({ pendingCount });
     } catch (error) {
       console.error('Failed to update pending count:', error);
@@ -105,20 +125,20 @@ export class SyncService {
     // Set up sync timeout to prevent indefinite hanging
     const syncTimeoutId = setTimeout(() => {
       if (this.syncState.status === 'syncing') {
-        console.error('Sync operation timed out after', SYNC_TIMEOUT_MS, 'ms');
+        console.error('Sync operation timed out after', this.timeoutMs, 'ms');
         this.setState({
           status: 'error',
-          error: `Sync timed out after ${SYNC_TIMEOUT_MS / 1000} seconds`
+          error: `Sync timed out after ${this.timeoutMs / 1000} seconds`
         });
       }
-    }, SYNC_TIMEOUT_MS);
+    }, this.timeoutMs);
 
     // Track initial state for potential rollback
     let syncCheckpoint: SyncCheckpoint | null = null;
 
     try {
       // Initialize sync engine first to ensure everything is set up
-      initializeGoogleSheetsSync(this.config);
+      this.syncEngineFactory(this.config!);
 
       // Create a checkpoint before making any changes
       syncCheckpoint = await this.createSyncCheckpoint();
@@ -182,7 +202,7 @@ export class SyncService {
 
   private async processSyncOperation(
     operation: SyncOperation,
-    syncEngine: ReturnType<typeof initializeGoogleSheetsSync>
+    syncEngine: GoogleSheetsSyncEngine
   ): Promise<void> {
     switch (operation.type) {
       case 'create':
@@ -190,7 +210,7 @@ export class SyncService {
           const article = operation.data as Article;
           const articleData = this.articleToSheetData(article);
           await syncEngine.saveArticle(articleData);
-          await articleRepository.markAsSynced(operation.articleUrl);
+          await this.repository.markAsSynced(operation.articleUrl);
         }
         break;
       case 'update':
@@ -198,7 +218,7 @@ export class SyncService {
           const article = operation.data as Article;
           const articleData = this.articleToSheetData(article);
           await syncEngine.updateArticle(operation.articleUrl, articleData);
-          await articleRepository.markAsSynced(operation.articleUrl);
+          await this.repository.markAsSynced(operation.articleUrl);
         }
         break;
       case 'delete':
@@ -208,7 +228,7 @@ export class SyncService {
   }
 
   private async syncFromRemote(): Promise<void> {
-    const syncEngine = initializeGoogleSheetsSync(this.config!);
+    const syncEngine = this.syncEngineFactory(this.config!);
 
     try {
       const remoteArticles = await syncEngine.getArticles();
@@ -219,7 +239,7 @@ export class SyncService {
       }
 
       // Future: Could use pending operations for more sophisticated conflict resolution
-      // const pendingOperations = await articleRepository.getPendingSyncOperations();
+      // const pendingOperations = await this.repository.getPendingSyncOperations();
 
       const articlesToUpdate: Article[] = [];
       const processedUrls = new Set<string>();
@@ -231,7 +251,7 @@ export class SyncService {
           continue;
         }
 
-        const localArticle = await articleRepository.getByUrl(remoteArticleData.url);
+        const localArticle = await this.repository.getByUrl(remoteArticleData.url);
         const remoteArticle = this.sheetDataToArticle(remoteArticleData);
 
         if (!localArticle) {
@@ -249,32 +269,20 @@ export class SyncService {
       // Apply all updates atomically
       if (articlesToUpdate.length > 0) {
         console.log(`Applying ${articlesToUpdate.length} article updates from remote`);
-        await articleRepository.bulkUpdate(articlesToUpdate);
+        await this.repository.bulkUpdate(articlesToUpdate);
       }
-
-      // REMOVED DANGEROUS DELETION LOGIC:
-      // The old code would delete any local article not found remotely.
-      // This was causing data loss when:
-      // - Remote fetch was incomplete
-      // - Network issues occurred
-      // - Authentication expired mid-sync
-      // - User saved articles during sync
-      //
-      // Instead, we now ONLY explicitly track deletions through sync operations.
-      // If an article was deleted remotely, it should come through as a delete operation,
-      // not be inferred from absence in the remote list.
 
       console.log(`Successfully synced ${processedUrls.size} articles from remote`);
 
       // Run cleanup of old deleted articles after successful remote sync
       try {
-        const localCleanedUp = await articleRepository.cleanupDeletedArticles(30);
+        const localCleanedUp = await this.repository.cleanupDeletedArticles(30);
         if (localCleanedUp > 0) {
           console.log(`Cleaned up ${localCleanedUp} old deleted articles from local storage`);
         }
 
         // Also cleanup Google Sheets
-        const syncEngine = initializeGoogleSheetsSync(this.config!);
+        const syncEngine = this.syncEngineFactory(this.config!);
         if (typeof syncEngine.cleanupDeletedArticles === 'function') {
           const remoteCleanedUp = await syncEngine.cleanupDeletedArticles(30);
           if (remoteCleanedUp > 0) {
@@ -416,8 +424,8 @@ export class SyncService {
 
     try {
       // Initialize sync engine first to ensure auth provider is available
-      initializeGoogleSheetsSync(this.config);
-      const authProvider = getAuthProvider();
+      this.syncEngineFactory(this.config!);
+      const authProvider = this.authProviderGetter();
 
       // Handle any existing auth redirect first
       const handled = await authProvider.handleRedirect();
@@ -448,7 +456,7 @@ export class SyncService {
   }
 
   public async clearAllData(): Promise<void> {
-    await articleRepository.clearSyncQueue();
+    await this.repository.clearSyncQueue();
     await this.updatePendingCount();
   }
 
@@ -466,7 +474,7 @@ export class SyncService {
   private async validateSyncPreconditions(): Promise<void> {
     // Check if database is accessible
     try {
-      await articleRepository.getCount();
+      await this.repository.getCount();
     } catch {
       throw new Error('Local database is not accessible');
     }
@@ -481,8 +489,8 @@ export class SyncService {
 
   private async createSyncCheckpoint(): Promise<SyncCheckpoint> {
     const [articleCount, syncQueueCount] = await Promise.all([
-      articleRepository.getCount(),
-      articleRepository.getPendingSyncOperations().then(ops => ops.length)
+      this.repository.getCount(),
+      this.repository.getPendingSyncOperations().then(ops => ops.length)
     ]);
 
     return {
@@ -494,8 +502,8 @@ export class SyncService {
   }
 
   private async processSyncQueueSafely(): Promise<SyncQueueResult> {
-    const operations = await articleRepository.getPendingSyncOperations();
-    const syncEngine = initializeGoogleSheetsSync(this.config!);
+    const operations = await this.repository.getPendingSyncOperations();
+    const syncEngine = this.syncEngineFactory(this.config!);
 
     const result: SyncQueueResult = {
       processed: 0,
@@ -511,7 +519,7 @@ export class SyncService {
       for (const operation of batch) {
         try {
           await this.processSyncOperation(operation, syncEngine);
-          await articleRepository.removeSyncOperation(operation.id);
+          await this.repository.removeSyncOperation(operation.id);
           result.processed++;
         } catch (error) {
           console.error(`Failed to process sync operation ${operation.id}:`, error);
@@ -524,12 +532,12 @@ export class SyncService {
           }
 
           // Increment retry count for other errors
-          await articleRepository.incrementSyncRetryCount(operation.id);
+          await this.repository.incrementSyncRetryCount(operation.id);
 
           // Remove operation if it has failed too many times (3 total attempts)
           if (operation.retryCount >= 2) {
             console.warn(`Removing sync operation ${operation.id} after ${operation.retryCount + 1} failed attempts`);
-            await articleRepository.removeSyncOperation(operation.id);
+            await this.repository.removeSyncOperation(operation.id);
           }
         }
       }
@@ -545,7 +553,7 @@ export class SyncService {
 
   private async verifySyncIntegrity(checkpoint: SyncCheckpoint): Promise<void> {
     // Verify that sync operations completed as expected
-    const currentSyncQueueCount = (await articleRepository.getPendingSyncOperations()).length;
+    const currentSyncQueueCount = (await this.repository.getPendingSyncOperations()).length;
 
     // We expect the sync queue to have fewer or equal items than before
     if (currentSyncQueueCount > checkpoint.syncQueueCount) {
@@ -555,7 +563,7 @@ export class SyncService {
 
     // Check that we can still access the database
     try {
-      await articleRepository.getCount();
+      await this.repository.getCount();
     } catch {
       throw new Error('Database integrity check failed after sync');
     }
@@ -579,14 +587,14 @@ export class SyncService {
     });
 
     // Clear any corrupted sync operations that might be stuck
-    const stalledOperations = await articleRepository.getPendingSyncOperations();
+    const stalledOperations = await this.repository.getPendingSyncOperations();
     const now = Date.now();
     const maxAge = 60 * 60 * 1000; // 1 hour
 
     for (const operation of stalledOperations) {
       if (now - operation.timestamp > maxAge && operation.retryCount >= 2) {
         console.log(`Removing stalled sync operation: ${operation.id}`);
-        await articleRepository.removeSyncOperation(operation.id);
+        await this.repository.removeSyncOperation(operation.id);
       }
     }
 

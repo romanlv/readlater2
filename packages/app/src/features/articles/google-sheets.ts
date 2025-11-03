@@ -1,7 +1,7 @@
-import { ArticleData, GoogleSheetsConfig } from './types';
-import { 
-  GoogleSheetsSyncEngine, 
-  PwaAuthProvider, 
+import { GoogleSheetsConfig } from './types';
+import {
+  GoogleSheetsSyncEngine,
+  PwaAuthProvider,
   LocalStorageSpreadsheetStorage,
   AuthenticationRequiredError
 } from '@readlater/google-sheets-sync';
@@ -32,24 +32,5 @@ export const getAuthProvider = (): PwaAuthProvider => {
 export const getAuthProviderSafely = (): PwaAuthProvider | null => {
   return authProvider;
 }
-
-export const saveArticlesToSheet = async (articles: ArticleData[], config: GoogleSheetsConfig): Promise<void> => {
-  const engine = initializeGoogleSheetsSync(config);
-
-  // Use batch save method to avoid multiple config file creation
-  const results = await engine.saveArticles(articles);
-
-  // Check if any saves failed
-  const failed = results.filter(r => !r.success);
-  if (failed.length > 0) {
-    const failedUrls = failed.map(r => r.articleUrl).join(', ');
-    throw new Error(`Failed to save ${failed.length} articles: ${failedUrls}`);
-  }
-};
-
-export const loadArticlesFromSheet = async (config: GoogleSheetsConfig): Promise<ArticleData[]> => {
-  const engine = initializeGoogleSheetsSync(config);
-  return await engine.getArticles();
-};
 
 export { AuthenticationRequiredError };

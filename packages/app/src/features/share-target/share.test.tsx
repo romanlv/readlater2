@@ -44,7 +44,6 @@ vi.mock('@/features/articles/google-sheets', async (importOriginal) => {
     ...actual,
     initializeGoogleSheetsSync: vi.fn(),
     getAuthProvider: () => mockAuthProvider,
-    loadArticlesFromSheet: vi.fn(),
     AuthenticationRequiredError: class extends Error {
       constructor() {
         super('Auth Required');
