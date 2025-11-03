@@ -20,7 +20,16 @@ function AppContent() {
     // Check for authentication redirect
     if (window.location.hash.includes('access_token')) {
       console.log('🔐 Authentication redirect detected');
-      syncService.authenticate();
+      syncService.authenticate().then(result => {
+        if (result.success) {
+          // Auto-sync after successful authentication
+          console.log('🔄 Starting auto-sync after authentication');
+          syncService.syncNow();
+        }
+      });
+    } else {
+      // Check auth status on normal app load
+      syncService.checkAuthStatus();
     }
   }, []);
 

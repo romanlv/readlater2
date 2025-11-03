@@ -55,8 +55,10 @@ export function useSync(config?: GoogleSheetsConfig) {
     syncNow,
     authenticate,
     isSyncing: syncState.status === 'syncing' || syncMutation.isPending,
-    canSync: !!config && syncState.status !== 'syncing',
+    canSync: !!config && syncState.status !== 'syncing' && syncState.status !== 'checking-auth',
     needsAuth: syncState.status === 'auth-required',
+    isCheckingAuth: syncState.status === 'checking-auth',
+    isNotAuthenticated: syncState.status === 'not-authenticated',
     lastSyncError: syncState.error || (syncMutation.error?.message)
   };
 }

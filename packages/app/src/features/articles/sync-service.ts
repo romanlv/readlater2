@@ -4,7 +4,7 @@ import { initializeGoogleSheetsSync, AuthenticationRequiredError, getAuthProvide
 import { articleRepository, ArticleRepository } from './repository.js';
 import type { GoogleSheetsSyncEngine, PwaAuthProvider } from '@readlater/google-sheets-sync';
 
-export type SyncStatus = 'idle' | 'syncing' | 'error' | 'auth-required';
+export type SyncStatus = 'idle' | 'syncing' | 'error' | 'auth-required' | 'checking-auth' | 'not-authenticated';
 
 export interface SyncState {
   status: SyncStatus;
@@ -63,6 +63,42 @@ export class SyncService {
 
   public configure(config: GoogleSheetsConfig): void {
     this.config = config;
+    // Eagerly initialize sync engine and auth provider
+    this.syncEngineFactory(config);
+  }
+
+  /**
+   * Checks authentication status on app load
+   * Sets state to 'not-authenticated' if no valid token, 'idle' if authenticated
+   */
+  public async checkAuthStatus(): Promise<void> {
+    if (!this.config) {
+      console.warn('Cannot check auth status: sync service not configured');
+      return;
+    }
+
+    try {
+      this.setState({ status: 'checking-auth' });
+
+      // Initialize sync engine to create auth provider
+      this.syncEngineFactory(this.config);
+      const authProvider = this.authProviderGetter();
+
+      // Check if authenticated (only checks localStorage, no server call)
+      const isAuthenticated = await authProvider.isAuthenticated();
+
+      if (isAuthenticated) {
+        console.log('Auth check: User is authenticated');
+        this.setState({ status: 'idle' });
+      } else {
+        console.log('Auth check: User is not authenticated');
+        this.setState({ status: 'not-authenticated' });
+      }
+    } catch (error) {
+      console.error('Auth status check failed:', error);
+      // On error, assume not authenticated
+      this.setState({ status: 'not-authenticated' });
+    }
   }
 
   public getState(): SyncState {

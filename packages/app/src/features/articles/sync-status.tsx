@@ -11,10 +11,14 @@ interface SyncStatusProps {
 export function SyncStatus({ config, isOnline }: SyncStatusProps) {
   const { syncState, syncNow, authenticate, isSyncing, canSync, needsAuth, lastSyncError } = useSync(config);
 
+  const isCheckingAuth = syncState.status === 'checking-auth';
+  const isNotAuthenticated = syncState.status === 'not-authenticated';
+
   const getSyncIcon = () => {
     if (!isOnline) return <WifiOff className="w-4 h-4" />;
+    if (isCheckingAuth) return <RefreshCw className="w-4 h-4 animate-spin" />;
     if (isSyncing) return <RefreshCw className="w-4 h-4 animate-spin" />;
-    if (needsAuth) return <AlertCircle className="w-4 h-4" />;
+    if (isNotAuthenticated || needsAuth) return <AlertCircle className="w-4 h-4" />;
     if (lastSyncError) return <AlertCircle className="w-4 h-4" />;
     if (syncState.pendingCount > 0) return <Clock className="w-4 h-4" />;
     return <CheckCircle className="w-4 h-4" />;
@@ -22,17 +26,21 @@ export function SyncStatus({ config, isOnline }: SyncStatusProps) {
 
   const getSyncText = () => {
     if (!isOnline) return 'Offline';
+    if (isCheckingAuth) return 'Checking...';
     if (isSyncing) return 'Syncing...';
+    if (isNotAuthenticated) return 'Not signed in';
     if (needsAuth) return 'Sign in needed';
     if (lastSyncError) return 'Sync error';
     if (syncState.pendingCount > 0) return `${syncState.pendingCount} pending`;
-    return 'Synced';
+    if (syncState.lastSyncTime) return 'Synced';
+    return 'Ready';
   };
 
   const getSyncColor = () => {
     if (!isOnline) return 'text-gray-500 bg-gray-100';
+    if (isCheckingAuth) return 'text-blue-600 bg-blue-100';
     if (isSyncing) return 'text-blue-600 bg-blue-100';
-    if (needsAuth) return 'text-yellow-600 bg-yellow-100';
+    if (isNotAuthenticated || needsAuth) return 'text-yellow-600 bg-yellow-100';
     if (lastSyncError) return 'text-red-600 bg-red-100';
     if (syncState.pendingCount > 0) return 'text-orange-600 bg-orange-100';
     return 'text-green-600 bg-green-100';
@@ -59,17 +67,17 @@ export function SyncStatus({ config, isOnline }: SyncStatusProps) {
 
       {isOnline && config && (
         <>
-          {needsAuth ? (
+          {(isNotAuthenticated || needsAuth) ? (
             <Button
               size="sm"
-              variant="ghost"
+              variant="default"
               onClick={authenticate}
-              className="text-xs px-2 py-1 h-auto"
-              title="Sign in to Google Sheets to sync"
+              className="text-xs px-3 py-1.5 h-auto"
+              title="Sign in to Google Sheets to sync your articles"
             >
               Sign In
             </Button>
-          ) : canSync && (
+          ) : canSync && !isCheckingAuth && (
             <Button
               size="sm"
               variant="ghost"
