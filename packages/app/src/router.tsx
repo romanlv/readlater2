@@ -2,6 +2,8 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { ArticleList } from '@/features/articles/article-list';
 import { YouTubeVideoPage } from '@/features/articles/youtube-video-page';
 import { ShareTargetDisplay } from '@/features/share-target/share-target-display';
+import { PrivacyPage } from '@/pages/privacy';
+import { TermsPage } from '@/pages/terms';
 import { useAddArticle } from '@/features/articles/hooks';
 import { ArticleFormData } from '@/features/articles/article-edit-form';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -97,6 +99,14 @@ const router = createBrowserRouter(
     {
       path: '/article/:encodedUrl',
       element: <YouTubeVideoPage />,
+    },
+    {
+      path: '/privacy',
+      element: <PrivacyPage />,
+    },
+    {
+      path: '/terms',
+      element: <TermsPage />,
     },
   ],
   {

@@ -12,7 +12,7 @@ import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ExtensionDownloadLink } from '@/components/extension-download-link';
 import { extractYouTubeVideoId } from '@/lib/youtube';
 import { encodeArticleUrl } from '@/lib/url-encode';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { cleanUrl, isValidUrl } from '@/lib/url-cleaner';
 
 // Hook to track online/offline status
@@ -460,6 +460,31 @@ export function ArticleList() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Footer */}
+      <footer className="mt-8 pt-6 pb-4 border-t border-border">
+        <div className="text-center text-xs text-muted-foreground space-y-2">
+          <div className="flex items-center justify-center gap-3">
+            <Link to="/privacy" className="hover:text-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link to="/terms" className="hover:text-foreground transition-colors">
+              Terms of Service
+            </Link>
+            <span>•</span>
+            <a
+              href="https://github.com/romanlv/readlater2"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors"
+            >
+              GitHub
+            </a>
+          </div>
+          <p>Privacy-first link saving. Your data, your control.</p>
+        </div>
+      </footer>
     </div>
   );
 }

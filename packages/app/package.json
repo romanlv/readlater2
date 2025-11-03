@@ -26,6 +26,7 @@
     "clsx": "^2.1.1",
     "dexie": "^4.2.0",
     "lucide-react": "^0.525.0",
+    "marked": "^16.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.9.3",

@@ -12,6 +12,97 @@
   }
 }
 
+/* Prose styles for markdown content */
+.prose {
+  color: var(--color-foreground);
+  line-height: 1.75;
+}
+
+.prose h1 {
+  font-size: 2.25em;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 0.8888889em;
+  line-height: 1.1111111;
+  color: var(--color-foreground);
+}
+
+.prose h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  line-height: 1.3333333;
+  color: var(--color-foreground);
+}
+
+.prose h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin-top: 1.6em;
+  margin-bottom: 0.6em;
+  line-height: 1.6;
+  color: var(--color-foreground);
+}
+
+.prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.prose ul,
+.prose ol {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.prose a:hover {
+  opacity: 0.8;
+}
+
+.prose code {
+  font-size: 0.875em;
+  font-weight: 600;
+  background-color: var(--color-muted);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  color: var(--color-foreground);
+}
+
+.prose pre {
+  background-color: var(--color-muted);
+  overflow-x: auto;
+  padding: 1em;
+  border-radius: 0.5rem;
+  margin-top: 1.7142857em;
+  margin-bottom: 1.7142857em;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  font-weight: 400;
+  font-size: 0.875em;
+}
+
 /* Apply theme-aware background to prevent whitespace in dark mode */
 /* html {
   background-color: var(--color-background);

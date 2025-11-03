@@ -77,7 +77,7 @@ export function ArticleEditForm({
               type="url"
               value={formData.url}
               onChange={(e) => handleInputChange('url', e.target.value)}
-              placeholder="https://stephango.com/vault"
+              placeholder="https://example.com/article"
               required
               disabled={mode === 'edit'} // URL should not be editable in edit mode
               className="bg-background border-border text-foreground placeholder:text-muted-foreground"
@@ -90,8 +90,7 @@ export function ArticleEditForm({
               id="title"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="How I use Obsidian — Steph Ango"
-              required
+              placeholder="Article title (auto-filled from page)"
               className="bg-background border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
@@ -102,7 +101,7 @@ export function ArticleEditForm({
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="https://stephango.com/vault"
+              placeholder="Brief description or summary of the article"
               rows={3}
               className="bg-background border-border text-foreground placeholder:text-muted-foreground resize-none"
             />
@@ -137,7 +136,7 @@ export function ArticleEditForm({
           <div className="flex gap-3 pt-6">
             <Button
               type="submit"
-              disabled={isLoading || !formData.url.trim() || !formData.title.trim()}
+              disabled={isLoading || !formData.url.trim()}
               className="flex-1 font-medium py-3"
             >
               {isLoading ? 'Saving...' : mode === 'create' ? 'Save Article' : 'Update Article'}
