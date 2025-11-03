@@ -62,14 +62,9 @@ export function ArticleEditForm({
   };
 
   return (
-    <div className="w-full max-w-2xl">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-foreground">
-          {mode === 'create' ? 'Save Article' : 'Edit Article'}
-        </h2>
-      </div>
-      <div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="w-full max-w-2xl flex flex-col">
+      <div className="flex-1 pb-24 md:pb-0 px-6 md:px-0">
+        <form onSubmit={handleSubmit} className="space-y-6" id="article-form">
           <div className="space-y-3">
             <Label htmlFor="url" className="text-foreground font-medium">URL</Label>
             <Input
@@ -132,26 +127,30 @@ export function ArticleEditForm({
               Separate tags with commas
             </p>
           </div>
-
-          <div className="flex gap-3 pt-6">
-            <Button
-              type="submit"
-              disabled={isLoading || !formData.url.trim()}
-              className="flex-1 font-medium py-3"
-            >
-              {isLoading ? 'Saving...' : mode === 'create' ? 'Save Article' : 'Update Article'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isLoading}
-              className="flex-1 py-3"
-            >
-              Cancel
-            </Button>
-          </div>
         </form>
+      </div>
+
+      {/* Sticky button bar on mobile */}
+      <div className="fixed bottom-0 left-0 right-0 md:relative bg-background border-t md:border-t-0 border-border p-4 md:p-0 md:pt-6 shrink-0">
+        <div className="max-w-2xl mx-auto flex gap-3">
+          <Button
+            type="submit"
+            form="article-form"
+            disabled={isLoading || !formData.url.trim()}
+            className="flex-1 font-medium py-3"
+          >
+            {isLoading ? 'Saving...' : mode === 'create' ? 'Save Article' : 'Update Article'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isLoading}
+            className="flex-1 py-3"
+          >
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { usePaginatedArticles, useAddArticle, useUpdateArticle, useDeleteArticle
 import { Article } from '@/lib/db';
 import { SyncStatus } from './sync-status';
 import { config } from '@/config';
-import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw, Plus } from 'lucide-react';
+import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw, Plus, X } from 'lucide-react';
 import { ArticleFilters } from './repository';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ExtensionDownloadLink } from '@/components/extension-download-link';
@@ -427,7 +427,18 @@ export function ArticleList() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl h-screen md:h-auto md:max-h-[90vh] p-0 md:p-6 rounded-none md:rounded-lg border-0 md:border">
+          <div className="flex items-center justify-between mb-6 px-6 pt-6 md:p-0 md:mb-6">
+            <h2 className="text-xl font-semibold text-foreground">Edit Article</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditDialogOpen(false)}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           {editingArticle && (
             <ArticleEditForm
               initialData={{
@@ -448,7 +459,18 @@ export function ArticleList() {
 
       {/* Add Article Confirmation Dialog */}
       <Dialog open={isAddingNew} onOpenChange={setIsAddingNew}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl h-screen md:h-auto md:max-h-[90vh] p-0 md:p-6 rounded-none md:rounded-lg border-0 md:border">
+          <div className="flex items-center justify-between mb-6 px-6 pt-6 md:p-0 md:mb-6">
+            <h2 className="text-xl font-semibold text-foreground">Save Article</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsAddingNew(false)}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           {newArticleData && (
             <ArticleEditForm
               initialData={newArticleData}
