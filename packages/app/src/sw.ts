@@ -2,6 +2,7 @@
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
 import { clientsClaim } from 'workbox-core'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
+import { parseSharedData } from './lib/share-parser'
 
 declare let self: ServiceWorkerGlobalScope
 
@@ -62,26 +63,35 @@ self.addEventListener('fetch', (event) => {
             swLog(`   ${key}: ${value}`);
           }
 
-          const title = formData.get('title') || '';
-          const text = formData.get('text') || '';
-          const url = formData.get('url') || formData.get('text') || '';
+          const rawTitle = formData.get('title') || '';
+          const rawText = formData.get('text') || '';
+          const rawUrl = formData.get('url') || '';
 
-          swLog('🎯 Extracted data:', { title, text, url });
+          swLog('🎯 Raw extracted data:', { title: rawTitle, text: rawText, url: rawUrl });
 
-          // Try to extract a valid URL
+          // Parse shared data to handle apps like Podcast Addict that put everything in text field
+          const parsed = parseSharedData({
+            title: rawTitle as string,
+            text: rawText as string,
+            url: rawUrl as string,
+          });
+
+          swLog('📦 Parsed data:', parsed);
+
+          // Validate URL
           let validUrl = '';
-          if (url) {
+          if (parsed.url) {
             try {
-              new URL(url as string); // Will throw if invalid URL
-              validUrl = url as string;
+              new URL(parsed.url); // Will throw if invalid URL
+              validUrl = parsed.url;
               swLog('✅ Valid URL found:', validUrl);
             } catch {
-              swLog('❌ Invalid URL format:', url);
+              swLog('❌ Invalid URL format:', parsed.url);
             }
           }
 
           // Build redirect URL with all available data
-          const redirectUrl = `${self.location.origin}${basePath}?share_target=1#title=${encodeURIComponent(title as string)}&text=${encodeURIComponent(text as string)}&url=${encodeURIComponent(validUrl)}`;
+          const redirectUrl = `${self.location.origin}${basePath}?share_target=1#title=${encodeURIComponent(parsed.title)}&text=${encodeURIComponent(parsed.text)}&url=${encodeURIComponent(validUrl)}`;
           swLog('🔄 Redirecting to:', redirectUrl);
 
           return Response.redirect(redirectUrl, 303);
