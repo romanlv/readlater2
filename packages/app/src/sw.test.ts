@@ -268,4 +268,122 @@ describe('Service Worker', () => {
 
     expect(mockEvent.respondWith).not.toHaveBeenCalled();
   });
+
+  test('extracts URL from text field (Podcast Addict format)', async () => {
+    const podcastText = `[SOLVED with Mark Manson] How to Make Friends as an Adult  🅴 #solvedWithMarkManson
+https://podcastaddict.com/solved-with-mark-manson/episode/209824729 via @PodcastAddict`;
+
+    const mockFormData = new Map([
+      ['title', ''],
+      ['text', podcastText],
+      ['url', ''],
+    ]);
+
+    mockFormData.entries = function* () {
+      yield ['title', ''];
+      yield ['text', podcastText];
+      yield ['url', ''];
+    };
+
+    mockFormData.get = function(key: string) {
+      const entries = Array.from(this.entries());
+      const entry = entries.find(([k]) => k === key);
+      return entry ? entry[1] : null;
+    };
+
+    const mockRequest = {
+      method: 'POST',
+      url: 'https://example.com/',
+      formData: vi.fn().mockResolvedValue(mockFormData),
+    };
+
+    const mockEvent = {
+      request: mockRequest,
+      respondWith: vi.fn(),
+    };
+
+    fetchEventListener(mockEvent);
+
+    const respondWithPromise = mockEvent.respondWith.mock.calls[0][0];
+
+    global.Response = {
+      redirect: vi.fn().mockReturnValue('redirect-response'),
+    } as unknown as typeof Response;
+
+    const originalURL = global.URL;
+    global.URL = vi.fn().mockImplementation((url) => ({
+      pathname: new originalURL(url).pathname,
+    })) as unknown as typeof URL;
+
+    await respondWithPromise;
+
+    // Should extract URL from text and use first line as title
+    // Note: whitespace is normalized (double spaces become single)
+    expect(global.Response.redirect).toHaveBeenCalledWith(
+      expect.stringContaining('url=https%3A%2F%2Fpodcastaddict.com%2Fsolved-with-mark-manson%2Fepisode%2F209824729'),
+      303
+    );
+    expect(global.Response.redirect).toHaveBeenCalledWith(
+      expect.stringContaining('title=%5BSOLVED%20with%20Mark%20Manson%5D%20How%20to%20Make%20Friends%20as%20an%20Adult%20%F0%9F%85%B4%20%23solvedWithMarkManson'),
+      303
+    );
+    expect(global.Response.redirect).toHaveBeenCalledWith(
+      expect.stringContaining('text=via%20%40PodcastAddict'),
+      303
+    );
+  });
+
+  test('handles URL extraction with multiple URLs in text', async () => {
+    const textWithUrls = 'Check https://first.com and https://second.com for details';
+
+    const mockFormData = new Map([
+      ['title', ''],
+      ['text', textWithUrls],
+      ['url', ''],
+    ]);
+
+    mockFormData.entries = function* () {
+      yield ['title', ''];
+      yield ['text', textWithUrls];
+      yield ['url', ''];
+    };
+
+    mockFormData.get = function(key: string) {
+      const entries = Array.from(this.entries());
+      const entry = entries.find(([k]) => k === key);
+      return entry ? entry[1] : null;
+    };
+
+    const mockRequest = {
+      method: 'POST',
+      url: 'https://example.com/',
+      formData: vi.fn().mockResolvedValue(mockFormData),
+    };
+
+    const mockEvent = {
+      request: mockRequest,
+      respondWith: vi.fn(),
+    };
+
+    fetchEventListener(mockEvent);
+
+    const respondWithPromise = mockEvent.respondWith.mock.calls[0][0];
+
+    global.Response = {
+      redirect: vi.fn().mockReturnValue('redirect-response'),
+    } as unknown as typeof Response;
+
+    const originalURL = global.URL;
+    global.URL = vi.fn().mockImplementation((url) => ({
+      pathname: new originalURL(url).pathname,
+    })) as unknown as typeof URL;
+
+    await respondWithPromise;
+
+    // Should extract first URL and remove it from text
+    expect(global.Response.redirect).toHaveBeenCalledWith(
+      expect.stringContaining('url=https%3A%2F%2Ffirst.com'),
+      303
+    );
+  });
 });
