@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ArticleList } from './article-list';
 import * as Hooks from './hooks';
-import * as SyncHook from './use-sync';
+import * as SyncHook from '@/features/sync/use-sync';
 import { Article } from '@/lib/db';
 import { TestWrapper } from '@/lib/test-utils';
 
@@ -17,7 +17,7 @@ vi.mock('./hooks', () => ({
 }));
 
 // Mock the sync hook
-vi.mock('./use-sync', () => ({
+vi.mock('@/features/sync/use-sync', () => ({
   useSync: vi.fn(),
 }));
 

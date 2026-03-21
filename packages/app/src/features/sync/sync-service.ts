@@ -1,7 +1,8 @@
-import { Article, SyncOperation } from '../../lib/db.js';
-import { ArticleData, GoogleSheetsConfig } from './types.js';
+import { Article, SyncOperation } from '@/lib/db.js';
+import { ArticleData } from '@/features/articles/types.js';
+import { GoogleSheetsConfig } from './types.js';
 import { initializeGoogleSheetsSync, AuthenticationRequiredError, getAuthProvider } from './google-sheets.js';
-import { articleRepository, ArticleRepository } from './repository.js';
+import { articleRepository, ArticleRepository } from '@/features/articles/repository.js';
 import type { GoogleSheetsSyncEngine, PwaAuthProvider } from '@readlater/google-sheets-sync';
 
 export type SyncStatus = 'idle' | 'syncing' | 'error' | 'auth-required' | 'checking-auth' | 'not-authenticated';

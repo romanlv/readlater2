@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { syncService } from "@/features/articles/sync-service"
+import { syncService } from "@/features/sync/sync-service"
 import { config } from "@/config"
 import PWABadge from "./PWABadge"
 import { DebugPanel } from "@/components/debug-panel"

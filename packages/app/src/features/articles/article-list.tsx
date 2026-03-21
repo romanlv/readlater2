@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArticleEditForm, ArticleFormData } from './article-edit-form';
 import { usePaginatedArticles, useAddArticle, useUpdateArticle, useDeleteArticle, useRestoreArticle } from './hooks';
 import { Article } from '@/lib/db';
-import { SyncStatus } from './sync-status';
+import { SyncStatus } from '@/features/sync/sync-status';
 import { config } from '@/config';
 import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw, Plus, X } from 'lucide-react';
 import { ArticleFilters } from './repository';

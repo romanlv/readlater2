@@ -1,4 +1,4 @@
-import { GoogleSheetsConfig } from "@/features/articles/types"
+import { GoogleSheetsConfig } from "@/features/sync/types"
 
 // Configuration - in production, this would come from environment variables
 export const config: GoogleSheetsConfig = {

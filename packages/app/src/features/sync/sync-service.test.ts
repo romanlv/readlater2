@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SyncService } from './sync-service';
 import { AuthenticationRequiredError } from './google-sheets';
-import { createMockArticleRepository } from './__tests__/helpers/mock-article-repository';
+import { createMockArticleRepository } from '@/features/articles/__tests__/helpers/mock-article-repository';
 import { createMockSyncEngine } from './__tests__/helpers/mock-sync-engine';
 import { createMockAuthProvider, createUnauthenticatedMockAuthProvider } from './__tests__/helpers/mock-auth-provider';
 import {
@@ -9,12 +9,12 @@ import {
   createTestArticleData,
   createTestSyncOperation,
   createTestConfig,
-} from './__tests__/helpers/fixtures';
+} from '@/features/articles/__tests__/helpers/fixtures';
 import {
   setupFakeTimers,
   assertSyncState,
   createStateTracker,
-} from './__tests__/helpers/test-helpers';
+} from '@/features/articles/__tests__/helpers/test-helpers';
 
 describe('SyncService', () => {
   let mockRepo: ReturnType<typeof createMockArticleRepository>;

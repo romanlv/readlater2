@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { SyncState, SyncStatus } from '../../sync-service';
+import type { SyncState, SyncStatus } from '@/features/sync/sync-service';
 
 /**
  * Sets up fake timers for testing time-dependent behavior.

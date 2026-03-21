@@ -32,7 +32,7 @@ vi.mock('@/features/articles/hooks', () => ({
 }));
 
 // Mock the google-sheets module
-vi.mock('@/features/articles/google-sheets', async (importOriginal) => {
+vi.mock('@/features/sync/google-sheets', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, unknown>;
   const mockAuthProvider = {
     handleRedirect: vi.fn(),
