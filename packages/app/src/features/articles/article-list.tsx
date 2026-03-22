@@ -7,14 +7,15 @@ import { usePaginatedArticles, useSearchArticles, useAddArticle, useUpdateArticl
 import { Article } from '@/lib/db';
 import { SyncStatus } from '@/features/sync/sync-status';
 import { config } from '@/config';
-import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw, Plus, X, Search } from 'lucide-react';
+import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, RotateCcw, Plus, X, Search } from 'lucide-react';
 import { ArticleFilters } from './repository';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ExtensionDownloadLink } from '@/components/extension-download-link';
 import { extractYouTubeVideoId } from '@/lib/youtube';
 import { encodeArticleUrl } from '@/lib/url-encode';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, Link, useSearchParams } from 'react-router';
 import { cleanUrl, isValidUrl } from '@/lib/url-cleaner';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 // Hook to track online/offline status
 function useOnlineStatus() {
@@ -37,27 +38,34 @@ function useOnlineStatus() {
 }
 
 
-type FilterType = 'all' | 'active' | 'archived' | 'deleted';
-
 export function ArticleList() {
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newArticleData, setNewArticleData] = useState<Partial<ArticleFormData> | null>(null);
-  const [currentFilter, setCurrentFilter] = useState<FilterType>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const isSearching = deferredSearchQuery.trim().length > 0;
   const isOnline = useOnlineStatus();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  // Convert filter type to ArticleFilters
+  // Convert URL search params to ArticleFilters
   const getFilters = (): ArticleFilters => {
-    switch (currentFilter) {
+    const filter = searchParams.get('filter') || 'active';
+    const tag = searchParams.get('tag');
+
+    if (filter === 'tag' && tag) {
+      return { tags: [tag] };
+    }
+
+    switch (filter) {
       case 'active':
         return { archived: false };
       case 'archived':
         return { archived: true };
+      case 'favorites':
+        return { favorite: true };
       case 'deleted':
         return { includeDeleted: true };
       default:
@@ -75,7 +83,8 @@ export function ArticleList() {
 
   // Flatten paginated results and filter based on current view
   const allArticles = data?.pages.flatMap(page => page.items) || [];
-  const filteredArticles = currentFilter === 'deleted'
+  const isDeletedView = searchParams.get('filter') === 'deleted';
+  const filteredArticles = isDeletedView
     ? allArticles.filter(article => !!article.deletedAt)
     : allArticles.filter(article => !article.deletedAt);
 
@@ -240,9 +249,8 @@ export function ArticleList() {
 
   if (error) {
     return (
-      <div className="container max-w-2xl mx-auto p-4 min-h-screen bg-background text-foreground">
-        <h1 className="text-2xl font-bold text-center mb-4">Read Later²</h1>
-        <div className="text-destructive text-center">
+      <div className="p-4 min-h-screen bg-background text-foreground">
+        <div className="text-destructive text-center mt-8">
           Error loading articles: {error.message}
         </div>
       </div>
@@ -250,23 +258,38 @@ export function ArticleList() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto p-4 min-h-screen bg-background text-foreground">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex-1" />
-        <h1 className="text-2xl font-bold">Read Later²</h1>
-        <div className="flex-1 flex justify-end items-center gap-2">
-          <Button
-            size="sm"
-            variant="default"
-            onClick={() => openAddDialog()}
-            className="h-8 w-8 p-0"
-            title="Add new article (Cmd+V)"
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
-          <ExtensionDownloadLink />
-          <ThemeSwitcher />
+    <div className="p-4 min-h-screen bg-background text-foreground">
+      <div className="flex items-center gap-2 mb-4">
+        <SidebarTrigger />
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search articles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-9"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
+        <Button
+          size="sm"
+          variant="default"
+          onClick={() => openAddDialog()}
+          className="h-8 w-8 p-0"
+          title="Add new article (Cmd+V)"
+        >
+          <Plus className="w-4 h-4" />
+        </Button>
+        <ExtensionDownloadLink />
+        <ThemeSwitcher />
       </div>
 
       {!isOnline && (
@@ -289,65 +312,6 @@ export function ArticleList() {
                 : `${articles.length} articles • Offline ready`}
             </div>
             <SyncStatus config={config} isOnline={isOnline} />
-          </div>
-
-          {/* Search */}
-          <div className="mb-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search articles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-9"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Filter Bar */}
-          <div className="mb-4 flex items-center gap-2" hidden={isSearching}>
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant={currentFilter === 'all' ? 'default' : 'outline'}
-                onClick={() => setCurrentFilter('all')}
-                className="text-xs h-8"
-              >
-                All
-              </Button>
-              <Button
-                size="sm"
-                variant={currentFilter === 'active' ? 'default' : 'outline'}
-                onClick={() => setCurrentFilter('active')}
-                className="text-xs h-8"
-              >
-                Active
-              </Button>
-              <Button
-                size="sm"
-                variant={currentFilter === 'archived' ? 'default' : 'outline'}
-                onClick={() => setCurrentFilter('archived')}
-                className="text-xs h-8"
-              >
-                Archived
-              </Button>
-              <Button
-                size="sm"
-                variant={currentFilter === 'deleted' ? 'default' : 'outline'}
-                onClick={() => setCurrentFilter('deleted')}
-                className="text-xs h-8"
-              >
-                Deleted
-              </Button>
-            </div>
           </div>
 
           <ul className="mb-4 space-y-2">

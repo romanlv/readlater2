@@ -317,6 +317,39 @@ export class ArticleRepository {
     await this.db.syncQueue.add(operation);
   }
 
+  async getTagCounts(): Promise<Map<string, number>> {
+    const articles = await this.db.articles
+      .filter(article => !article.deletedAt)
+      .toArray();
+
+    const tagCounts = new Map<string, number>();
+    for (const article of articles) {
+      for (const tag of article.tags) {
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+      }
+    }
+    return tagCounts;
+  }
+
+  async getFilterCounts(): Promise<{
+    all: number;
+    active: number;
+    favorites: number;
+    archived: number;
+    deleted: number;
+  }> {
+    const articles = await this.db.articles.toArray();
+    let all = 0, active = 0, favorites = 0, archived = 0, deleted = 0;
+    for (const article of articles) {
+      if (article.deletedAt) { deleted++; continue; }
+      all++;
+      if (!article.archived) active++;
+      if (article.archived) archived++;
+      if (article.favorite) favorites++;
+    }
+    return { all, active, favorites, archived, deleted };
+  }
+
   // Bulk operations for sync efficiency
   async bulkUpdate(articles: Article[]): Promise<void> {
     await this.db.articles.bulkPut(articles);

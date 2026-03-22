@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { MemoryRouter } from 'react-router';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 // Test wrapper with QueryClient and Router for components that use React Query and routing
 export function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -13,6 +14,8 @@ export function TestWrapper({ children }: { children: React.ReactNode }) {
   return React.createElement(
     QueryClientProvider,
     { client: queryClient },
-    React.createElement(MemoryRouter, {}, children)
+    React.createElement(MemoryRouter, {},
+      React.createElement(SidebarProvider, {}, children)
+    )
   );
 }

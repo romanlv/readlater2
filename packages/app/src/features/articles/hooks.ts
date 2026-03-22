@@ -2,6 +2,24 @@ import { useInfiniteQuery, useMutation, useQueryClient, useQuery, InfiniteData }
 import { articleRepository, ArticleFilters, PaginationCursor } from './repository.js';
 import { Article, PaginatedResult } from '../../lib/db.js';
 
+export function useFilterCounts() {
+  return useQuery({
+    queryKey: ['articles', 'filterCounts'],
+    queryFn: () => articleRepository.getFilterCounts(),
+  });
+}
+
+export function useTagCounts() {
+  return useQuery({
+    queryKey: ['articles', 'tagCounts'],
+    queryFn: async () => {
+      const map = await articleRepository.getTagCounts();
+      return Array.from(map.entries())
+        .sort((a, b) => b[1] - a[1]);
+    },
+  });
+}
+
 // Paginated articles with automatic infinite scroll
 export function usePaginatedArticles(filters?: ArticleFilters) {
   return useInfiniteQuery({

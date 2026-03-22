@@ -3,6 +3,21 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '@/App';
 
+// Mock window.matchMedia for SidebarProvider's useIsMobile hook
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 // Mock the article hooks
 vi.mock('@/features/articles/hooks', () => ({
   useAddArticle: vi.fn(() => ({
@@ -36,6 +51,12 @@ vi.mock('@/features/articles/hooks', () => ({
   useRestoreArticle: vi.fn(() => ({
     mutate: vi.fn(),
     isPending: false,
+  })),
+  useFilterCounts: vi.fn(() => ({
+    data: { all: 0, active: 0, favorites: 0, archived: 0, deleted: 0 },
+  })),
+  useTagCounts: vi.fn(() => ({
+    data: [],
   })),
 }));
 

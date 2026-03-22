@@ -9,6 +9,7 @@ import { ArticleFormData } from '@/features/articles/article-edit-form';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useEffect } from 'react';
 import { cleanUrl } from '@/lib/url-cleaner';
+import { SidebarLayout } from '@/components/sidebar-layout';
 
 function ShareTargetRoute() {
   const [searchParams] = useSearchParams();
@@ -87,7 +88,11 @@ function RootRoute() {
     return <ShareTargetRoute />;
   }
 
-  return <ArticleList />;
+  return (
+    <SidebarLayout>
+      <ArticleList />
+    </SidebarLayout>
+  );
 }
 
 const router = createBrowserRouter(
