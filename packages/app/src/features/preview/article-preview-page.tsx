@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { YouTubePlayer } from '@/components/youtube-player';
 import { useArticle, useUpdateArticle, useDeleteArticle } from '@/features/articles/hooks';
 import { ArticleEditForm, ArticleFormData } from '@/features/articles/article-edit-form';
 import { ArrowLeft, Edit, Star, Archive, ArchiveRestore, Trash2, ExternalLink, X } from 'lucide-react';
-import { useDebounce } from '@/hooks/use-debounce';
+import { useAutoSaveNotes } from '@/hooks/use-auto-save-notes';
 import { extractYouTubeVideoId } from '@/lib/youtube';
 import { decodeArticleUrl } from '@/lib/url-encode';
 import { useParams, useNavigate } from 'react-router';
@@ -16,52 +16,26 @@ export function ArticlePreviewPage() {
   const navigate = useNavigate();
   const articleUrl = encodedUrl ? decodeArticleUrl(encodedUrl) : '';
   const { data: article, isLoading, error } = useArticle(articleUrl);
-  const [notes, setNotes] = useState('');
   const updateArticleMutation = useUpdateArticle();
   const deleteArticleMutation = useDeleteArticle();
-  const debouncedNotes = useDebounce(notes, 1000);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const videoId = article ? extractYouTubeVideoId(article.url) : null;
   const isYouTube = !!videoId;
 
-  // Initialize notes from article data
-  useEffect(() => {
-    if (article) {
-      setNotes(article.notes || '');
-    }
-  }, [article]);
+  const handleSaveNotes = useCallback((notesValue: string) => {
+    updateArticleMutation.mutate({
+      url: articleUrl,
+      updates: { notes: notesValue, editedAt: Date.now() }
+    });
+  }, [articleUrl, updateArticleMutation]);
 
-  // Auto-save notes when they change (after debounce)
-  useEffect(() => {
-    if (article && debouncedNotes !== (article.notes || '')) {
-      updateArticleMutation.mutate({
-        url: articleUrl,
-        updates: { notes: debouncedNotes, editedAt: Date.now() }
-      });
-    }
-  }, [debouncedNotes, articleUrl, article, updateArticleMutation]);
-
-  // Save notes on unmount if there are unsaved changes
-  useEffect(() => {
-    return () => {
-      if (article && notes !== (article.notes || '')) {
-        updateArticleMutation.mutate({
-          url: articleUrl,
-          updates: { notes, editedAt: Date.now() }
-        });
-      }
-    };
-  }, [notes, articleUrl, article, updateArticleMutation]);
-
-  const handleNotesBlur = () => {
-    if (article && notes !== (article.notes || '')) {
-      updateArticleMutation.mutate({
-        url: articleUrl,
-        updates: { notes, editedAt: Date.now() }
-      });
-    }
-  };
+  const { notes, setNotes, handleBlur: handleNotesBlur } = useAutoSaveNotes({
+    initialNotes: article?.notes,
+    articleUrl,
+    onSave: handleSaveNotes,
+    debounceMs: 2000,
+  });
 
   const handleToggleFavorite = () => {
     if (!article) return;
