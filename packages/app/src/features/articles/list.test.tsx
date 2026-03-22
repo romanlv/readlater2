@@ -10,6 +10,7 @@ import { TestWrapper } from '@/lib/test-utils';
 // Mock the hooks module
 vi.mock('./hooks', () => ({
   usePaginatedArticles: vi.fn(),
+  useSearchArticles: vi.fn(),
   useAddArticle: vi.fn(),
   useUpdateArticle: vi.fn(),
   useDeleteArticle: vi.fn(),
@@ -81,6 +82,15 @@ describe('ArticleList', () => {
       isLoading: false,
       error: null,
     } as ReturnType<typeof Hooks.usePaginatedArticles>);
+
+    mockedHooks.useSearchArticles.mockReturnValue({
+      data: { pages: [] },
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetching: false,
+      isLoading: false,
+      error: null,
+    } as ReturnType<typeof Hooks.useSearchArticles>);
 
     mockedHooks.useAddArticle.mockReturnValue({
       mutate: vi.fn(),

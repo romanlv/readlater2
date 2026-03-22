@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useDeferredValue } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArticleEditForm, ArticleFormData } from './article-edit-form';
-import { usePaginatedArticles, useAddArticle, useUpdateArticle, useDeleteArticle, useRestoreArticle } from './hooks';
+import { usePaginatedArticles, useSearchArticles, useAddArticle, useUpdateArticle, useDeleteArticle, useRestoreArticle } from './hooks';
 import { Article } from '@/lib/db';
 import { SyncStatus } from '@/features/sync/sync-status';
 import { config } from '@/config';
-import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw, Plus, X } from 'lucide-react';
+import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, Filter, RotateCcw, Plus, X, Search } from 'lucide-react';
 import { ArticleFilters } from './repository';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ExtensionDownloadLink } from '@/components/extension-download-link';
@@ -44,6 +45,9 @@ export function ArticleList() {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newArticleData, setNewArticleData] = useState<Partial<ArticleFormData> | null>(null);
   const [currentFilter, setCurrentFilter] = useState<FilterType>('active');
+  const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const isSearching = deferredSearchQuery.trim().length > 0;
   const isOnline = useOnlineStatus();
   const navigate = useNavigate();
 
@@ -63,6 +67,7 @@ export function ArticleList() {
 
   // Use React Query hooks for IndexedDB
   const { data, fetchNextPage, hasNextPage, isFetching, isLoading, error } = usePaginatedArticles(getFilters());
+  const searchResults = useSearchArticles(deferredSearchQuery);
   const addArticleMutation = useAddArticle();
   const updateArticleMutation = useUpdateArticle();
   const deleteArticleMutation = useDeleteArticle();
@@ -70,9 +75,12 @@ export function ArticleList() {
 
   // Flatten paginated results and filter based on current view
   const allArticles = data?.pages.flatMap(page => page.items) || [];
-  const articles = currentFilter === 'deleted'
+  const filteredArticles = currentFilter === 'deleted'
     ? allArticles.filter(article => !!article.deletedAt)
     : allArticles.filter(article => !article.deletedAt);
+
+  const searchArticles = searchResults.data?.pages.flatMap(page => page.items) || [];
+  const articles = isSearching ? searchArticles : filteredArticles;
 
 
 
@@ -138,7 +146,11 @@ export function ArticleList() {
   }, []);
 
   const loadMore = () => {
-    if (hasNextPage && !isFetching) {
+    if (isSearching) {
+      if (searchResults.hasNextPage && !searchResults.isFetching) {
+        searchResults.fetchNextPage();
+      }
+    } else if (hasNextPage && !isFetching) {
       fetchNextPage();
     }
   };
@@ -272,13 +284,35 @@ export function ArticleList() {
         <>
           <div className="mb-4 flex items-center justify-between text-sm">
             <div className="text-muted-foreground">
-              {articles.length} articles • Offline ready
+              {isSearching
+                ? `${articles.length} result${articles.length !== 1 ? 's' : ''}`
+                : `${articles.length} articles • Offline ready`}
             </div>
             <SyncStatus config={config} isOnline={isOnline} />
           </div>
 
+          {/* Search */}
+          <div className="mb-4 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search articles..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
           {/* Filter Bar */}
-          <div className="mb-4 flex items-center gap-2">
+          <div className="mb-4 flex items-center gap-2" hidden={isSearching}>
             <Filter className="w-4 h-4 text-muted-foreground" />
             <div className="flex gap-1">
               <Button
@@ -411,14 +445,14 @@ export function ArticleList() {
             ))}
           </ul>
 
-          {hasNextPage && (
+          {(isSearching ? searchResults.hasNextPage : hasNextPage) && (
             <div className="text-center mb-4">
               <Button
                 onClick={loadMore}
-                disabled={isFetching}
+                disabled={isSearching ? searchResults.isFetching : isFetching}
                 variant="outline"
               >
-                {isFetching ? 'Loading...' : 'Load More'}
+                {(isSearching ? searchResults.isFetching : isFetching) ? 'Loading...' : 'Load More'}
               </Button>
             </div>
           )}

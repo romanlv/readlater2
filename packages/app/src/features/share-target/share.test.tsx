@@ -17,6 +17,14 @@ vi.mock('@/features/articles/hooks', () => ({
     isLoading: false,
     error: null,
   })),
+  useSearchArticles: vi.fn(() => ({
+    data: { pages: [] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetching: false,
+    isLoading: false,
+    error: null,
+  })),
   useUpdateArticle: vi.fn(() => ({
     mutate: vi.fn(),
     isPending: false,
