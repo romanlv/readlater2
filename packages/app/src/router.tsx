@@ -4,6 +4,7 @@ import { YouTubeVideoPage } from '@/features/articles/youtube-video-page';
 import { ShareTargetDisplay } from '@/features/share-target/share-target-display';
 import { PrivacyPage } from '@/pages/privacy';
 import { TermsPage } from '@/pages/terms';
+import { SettingsPage } from '@/pages/settings';
 import { useAddArticle } from '@/features/articles/hooks';
 import { ArticleFormData } from '@/features/articles/article-edit-form';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -112,6 +113,10 @@ const router = createBrowserRouter(
     {
       path: '/terms',
       element: <TermsPage />,
+    },
+    {
+      path: '/settings',
+      element: <SettingsPage />,
     },
   ],
   {

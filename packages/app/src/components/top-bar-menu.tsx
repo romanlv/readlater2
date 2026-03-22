@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Download, EllipsisVertical } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { Download, Settings, EllipsisVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ExtensionInstallDialog } from './extension-install-dialog';
@@ -12,6 +14,7 @@ import { ExtensionInstallDialog } from './extension-install-dialog';
 export function TopBarMenu() {
   const [showExtensionDialog, setShowExtensionDialog] = useState(false);
   const extensionUrl = `${import.meta.env.BASE_URL}readlater-extension.zip`;
+  const navigate = useNavigate();
 
   return (
     <>
@@ -23,6 +26,14 @@ export function TopBarMenu() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() => navigate('/settings')}
+            className="cursor-pointer"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => setShowExtensionDialog(true)}
             className="cursor-pointer"
