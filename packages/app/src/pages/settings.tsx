@@ -36,7 +36,7 @@ export function SettingsPage() {
   const { settings, updateSettings } = useSettings();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container max-w-2xl mx-auto px-4 py-8">
         <div className="mb-6">
           <Button variant="outline" asChild>
@@ -47,10 +47,10 @@ export function SettingsPage() {
           </Button>
         </div>
 
-        <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
+        <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold text-foreground">General</h2>
+          <h2 className="text-lg font-semibold">General</h2>
           <p className="text-sm text-muted-foreground">
             Manage your app preferences.
           </p>
@@ -59,22 +59,6 @@ export function SettingsPage() {
         <Separator className="my-4" />
 
         <div>
-          <SettingRow
-            id="open-new-tab"
-            label="Open in new tab"
-            description="Open article links in a new browser tab."
-            checked={settings.openInNewTab}
-            onCheckedChange={(v) => updateSettings({ openInNewTab: v })}
-          />
-          <Separator />
-          <SettingRow
-            id="confirm-delete"
-            label="Confirm before delete"
-            description="Show a confirmation dialog before deleting an article."
-            checked={settings.confirmBeforeDelete}
-            onCheckedChange={(v) => updateSettings({ confirmBeforeDelete: v })}
-          />
-          <Separator />
           <SettingRow
             id="auto-sync"
             label="Auto sync"

@@ -1,20 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export interface AppSettings {
-  /** Confirm before deleting an article */
-  confirmBeforeDelete: boolean;
   /** Automatically sync when online */
   autoSync: boolean;
-  /** Open articles in a new tab */
-  openInNewTab: boolean;
 }
 
 const STORAGE_KEY = 'app-settings';
 
 const defaultSettings: AppSettings = {
-  confirmBeforeDelete: true,
   autoSync: true,
-  openInNewTab: true,
 };
 
 function loadSettings(): AppSettings {
