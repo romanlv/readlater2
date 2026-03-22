@@ -7,7 +7,7 @@ import { usePaginatedArticles, useSearchArticles, useAddArticle, useUpdateArticl
 import { Article } from '@/lib/db';
 import { SyncStatus } from '@/features/sync/sync-status';
 import { config } from '@/config';
-import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, RotateCcw, Plus, X, Search } from 'lucide-react';
+import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, RotateCcw, Plus, X, Search, Eye, ExternalLink } from 'lucide-react';
 import { ArticleFilters } from './repository';
 import { TopBarMenu } from '@/components/top-bar-menu';
 import { ThemeSwitcher } from '@/components/theme-switcher';
@@ -16,6 +16,7 @@ import { encodeArticleUrl } from '@/lib/url-encode';
 import { useNavigate, Link, useSearchParams } from 'react-router';
 import { cleanUrl, isValidUrl } from '@/lib/url-cleaner';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useSettings } from '@/features/settings/use-settings';
 
 // Hook to track online/offline status
 function useOnlineStatus() {
@@ -49,6 +50,7 @@ export function ArticleList() {
   const isOnline = useOnlineStatus();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { settings } = useSettings();
 
   // Convert URL search params to ArticleFilters
   const getFilters = (): ArticleFilters => {
@@ -240,11 +242,16 @@ export function ArticleList() {
 
   const handleArticleClick = (e: React.MouseEvent<HTMLAnchorElement>, article: Article) => {
     const videoId = extractYouTubeVideoId(article.url);
-    if (videoId) {
+    if (videoId || settings.openInPreview) {
       e.preventDefault();
       const encodedUrl = encodeArticleUrl(article.url);
       navigate(`/article/${encodedUrl}`);
     }
+  };
+
+  const handleOpenPreview = (article: Article) => {
+    const encodedUrl = encodeArticleUrl(article.url);
+    navigate(`/article/${encodedUrl}`);
   };
 
   if (error) {
@@ -364,6 +371,27 @@ export function ArticleList() {
                         ) : (
                           // Actions for regular articles
                           <>
+                            {settings.openInPreview ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => window.open(article.url, '_blank')}
+                                className="text-muted-foreground hover:text-foreground p-1 h-8 w-8"
+                                title="Open in new tab"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleOpenPreview(article)}
+                                className="text-muted-foreground hover:text-foreground p-1 h-8 w-8"
+                                title="Open in preview"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"

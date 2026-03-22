@@ -66,6 +66,14 @@ export function SettingsPage() {
             checked={settings.autoSync}
             onCheckedChange={(v) => updateSettings({ autoSync: v })}
           />
+          <Separator />
+          <SettingRow
+            id="open-in-preview"
+            label="Open articles in preview"
+            description="Show articles in an embedded preview instead of opening in a new tab."
+            checked={settings.openInPreview}
+            onCheckedChange={(v) => updateSettings({ openInPreview: v })}
+          />
         </div>
       </div>
     </div>

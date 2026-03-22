@@ -3,12 +3,15 @@ import { useState, useEffect, useCallback } from 'react';
 export interface AppSettings {
   /** Automatically sync when online */
   autoSync: boolean;
+  /** Open articles in embedded preview instead of new tab */
+  openInPreview: boolean;
 }
 
 const STORAGE_KEY = 'app-settings';
 
 const defaultSettings: AppSettings = {
   autoSync: true,
+  openInPreview: false,
 };
 
 function loadSettings(): AppSettings {

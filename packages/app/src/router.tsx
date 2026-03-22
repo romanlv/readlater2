@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { ArticleList } from '@/features/articles/article-list';
-import { YouTubeVideoPage } from '@/features/articles/youtube-video-page';
+import { ArticlePreviewPage } from '@/features/preview/article-preview-page';
 import { ShareTargetDisplay } from '@/features/share-target/share-target-display';
 import { PrivacyPage } from '@/pages/privacy';
 import { TermsPage } from '@/pages/terms';
@@ -104,7 +104,7 @@ const router = createBrowserRouter(
     },
     {
       path: '/article/:encodedUrl',
-      element: <YouTubeVideoPage />,
+      element: <ArticlePreviewPage />,
     },
     {
       path: '/privacy',
