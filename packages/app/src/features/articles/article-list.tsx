@@ -9,8 +9,8 @@ import { SyncStatus } from '@/features/sync/sync-status';
 import { config } from '@/config';
 import { Edit, Star, Archive, ArchiveRestore, Trash2, Smartphone, RotateCcw, Plus, X, Search } from 'lucide-react';
 import { ArticleFilters } from './repository';
+import { TopBarMenu } from '@/components/top-bar-menu';
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { ExtensionDownloadLink } from '@/components/extension-download-link';
 import { extractYouTubeVideoId } from '@/lib/youtube';
 import { encodeArticleUrl } from '@/lib/url-encode';
 import { useNavigate, Link, useSearchParams } from 'react-router';
@@ -288,7 +288,7 @@ export function ArticleList() {
         >
           <Plus className="w-4 h-4" />
         </Button>
-        <ExtensionDownloadLink />
+        <TopBarMenu />
         <ThemeSwitcher />
       </div>
 

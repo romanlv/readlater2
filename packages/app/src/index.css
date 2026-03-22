@@ -10,6 +10,14 @@
   :root {
     font-size: 18px;
   }
+
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border);
+  }
 }
 
 /* Prose styles for markdown content */
