@@ -295,7 +295,12 @@ export function ArticleList() {
         >
           <Plus className="w-4 h-4" />
         </Button>
-        <TopBarMenu />
+        <TopBarMenu articles={articles} filterSuffix={(() => {
+          const filter = searchParams.get('filter') || 'active';
+          const tag = searchParams.get('tag');
+          if (filter === 'tag' && tag) return `tag-${tag}`;
+          return filter;
+        })()} />
         <ThemeSwitcher />
       </div>
 
