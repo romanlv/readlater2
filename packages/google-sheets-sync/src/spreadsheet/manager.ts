@@ -46,10 +46,22 @@ export class LocalStorageSpreadsheetStorage implements SpreadsheetStorage {
   }
 }
 
+export class RateLimitError extends Error {
+  constructor(
+    message: string,
+    public readonly retryAfterMs: number
+  ) {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
+
 export class GoogleSpreadsheetManager {
   private cache: ManagerCache = {};
   private readonly TOKEN_CACHE_DURATION = 45 * 60 * 1000; // 45 minutes
   private readonly ROWS_CACHE_DURATION = 30 * 1000; // 30 seconds - short cache for row data
+  private readonly MAX_RETRIES = 3;
+  private readonly INITIAL_BACKOFF_MS = 2000;
 
   constructor(
     private authProvider: AuthProvider,
@@ -72,18 +84,48 @@ export class GoogleSpreadsheetManager {
     return token;
   }
 
-  private async _fetch<T>(url: string, options: RequestInit): Promise<T> {
-    const response = await fetch(url, options);
-    if (response.ok) {
-      // Handle cases where the response might be empty
-      const text = await response.text();
-      return text ? JSON.parse(text) : ({} as T);
+  private isRateLimitError(status: number, message: string): boolean {
+    return status === 429 || message.toLowerCase().includes('quota exceeded');
+  }
+
+  private getRetryAfterMs(response: Response, attempt: number): number {
+    const retryAfter = response.headers.get('Retry-After');
+    if (retryAfter) {
+      const seconds = parseInt(retryAfter, 10);
+      if (!isNaN(seconds)) return seconds * 1000;
     }
-    const errorData = (await response.json().catch(() => ({ error: { message: 'Failed to parse API error response.' } }))) as {
-      error?: { message?: string };
-    };
-    const message = errorData.error?.message || `API request failed with status ${response.status}`;
-    throw new Error(message);
+    // Exponential backoff: 2s, 4s, 8s
+    return this.INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+  }
+
+  private async _fetch<T>(url: string, options: RequestInit): Promise<T> {
+    for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
+      const response = await fetch(url, options);
+      if (response.ok) {
+        const text = await response.text();
+        return text ? JSON.parse(text) : ({} as T);
+      }
+
+      const errorData = (await response.json().catch(() => ({ error: { message: 'Failed to parse API error response.' } }))) as {
+        error?: { message?: string };
+      };
+      const message = errorData.error?.message || `API request failed with status ${response.status}`;
+
+      if (this.isRateLimitError(response.status, message)) {
+        if (attempt < this.MAX_RETRIES) {
+          const backoffMs = this.getRetryAfterMs(response, attempt);
+          console.warn(`Rate limited (attempt ${attempt + 1}/${this.MAX_RETRIES + 1}), retrying in ${backoffMs}ms`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        // Exhausted retries — throw RateLimitError so callers can handle it
+        throw new RateLimitError(message, this.getRetryAfterMs(response, attempt));
+      }
+
+      throw new Error(message);
+    }
+    // Should not reach here, but satisfy TypeScript
+    throw new Error('Unexpected: exhausted retry loop');
   }
 
   private async getFileIdFromAppData(token: string): Promise<string | null> {

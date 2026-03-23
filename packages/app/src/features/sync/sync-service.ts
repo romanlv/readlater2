@@ -237,33 +237,6 @@ export class SyncService {
   }
 
 
-  private async processSyncOperation(
-    operation: SyncOperation,
-    syncEngine: GoogleSheetsSyncEngine
-  ): Promise<void> {
-    switch (operation.type) {
-      case 'create':
-        if (operation.data.url) {
-          const article = operation.data as Article;
-          const articleData = this.articleToSheetData(article);
-          await syncEngine.saveArticle(articleData);
-          await this.repository.markAsSynced(operation.articleUrl);
-        }
-        break;
-      case 'update':
-        if (operation.data.url) {
-          const article = operation.data as Article;
-          const articleData = this.articleToSheetData(article);
-          await syncEngine.updateArticle(operation.articleUrl, articleData);
-          await this.repository.markAsSynced(operation.articleUrl);
-        }
-        break;
-      case 'delete':
-        await syncEngine.deleteArticle(operation.articleUrl);
-        break;
-    }
-  }
-
   private async syncFromRemote(): Promise<void> {
     const syncEngine = this.syncEngineFactory(this.config!);
 
@@ -548,44 +521,108 @@ export class SyncService {
       errors: []
     };
 
-    // Process operations in smaller batches to avoid overwhelming the API
-    const batchSize = 5;
-    for (let i = 0; i < operations.length; i += batchSize) {
-      const batch = operations.slice(i, i + batchSize);
+    if (operations.length === 0) return result;
 
-      for (const operation of batch) {
-        try {
-          await this.processSyncOperation(operation, syncEngine);
-          await this.repository.removeSyncOperation(operation.id);
-          result.processed++;
-        } catch (error) {
-          console.error(`Failed to process sync operation ${operation.id}:`, error);
-          result.failures++;
-          result.errors.push(`Operation ${operation.type} for ${operation.articleUrl}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    // Group operations by type for batch processing
+    const creates: SyncOperation[] = [];
+    const updates: SyncOperation[] = [];
+    const deletes: SyncOperation[] = [];
 
-          // Handle authentication errors differently
-          if (error instanceof AuthenticationRequiredError) {
-            throw error; // Re-throw auth errors to stop sync
-          }
+    for (const op of operations) {
+      switch (op.type) {
+        case 'create': if (op.data.url) creates.push(op); break;
+        case 'update': if (op.data.url) updates.push(op); break;
+        case 'delete': deletes.push(op); break;
+      }
+    }
 
-          // Increment retry count for other errors
-          await this.repository.incrementSyncRetryCount(operation.id);
-
-          // Remove operation if it has failed too many times (3 total attempts)
-          if (operation.retryCount >= 2) {
-            console.warn(`Removing sync operation ${operation.id} after ${operation.retryCount + 1} failed attempts`);
-            await this.repository.removeSyncOperation(operation.id);
+    // Process creates in batch (1 API call for all)
+    if (creates.length > 0) {
+      try {
+        const articles = creates.map(op => this.articleToSheetData(op.data as Article));
+        const results = await syncEngine.saveArticles(articles);
+        for (let i = 0; i < creates.length; i++) {
+          if (results[i]?.success) {
+            await this.repository.removeSyncOperation(creates[i].id);
+            await this.repository.markAsSynced(creates[i].articleUrl);
+            result.processed++;
+          } else {
+            await this.handleOperationFailure(creates[i], results[i]?.error || 'Batch create failed', result);
           }
         }
+      } catch (error) {
+        if (error instanceof AuthenticationRequiredError) throw error;
+        // Batch failed — mark all for retry
+        for (const op of creates) {
+          await this.handleOperationFailure(op, error instanceof Error ? error.message : 'Unknown error', result);
+        }
       }
+    }
 
-      // Small delay between batches to be respectful to the API
-      if (i + batchSize < operations.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+    // Process updates in batch (1 read + 1 write API call for all)
+    if (updates.length > 0) {
+      try {
+        const batchUpdates = updates.map(op => ({
+          url: op.articleUrl,
+          updates: this.articleToSheetData(op.data as Article)
+        }));
+        const results = await syncEngine.batchUpdateArticles(batchUpdates);
+        for (let i = 0; i < updates.length; i++) {
+          if (results[i]?.success) {
+            await this.repository.removeSyncOperation(updates[i].id);
+            await this.repository.markAsSynced(updates[i].articleUrl);
+            result.processed++;
+          } else {
+            await this.handleOperationFailure(updates[i], results[i]?.error || 'Batch update failed', result);
+          }
+        }
+      } catch (error) {
+        if (error instanceof AuthenticationRequiredError) throw error;
+        for (const op of updates) {
+          await this.handleOperationFailure(op, error instanceof Error ? error.message : 'Unknown error', result);
+        }
+      }
+    }
+
+    // Process deletes in batch (1 read + 1 write API call for all)
+    if (deletes.length > 0) {
+      try {
+        const urls = deletes.map(op => op.articleUrl);
+        const results = await syncEngine.batchDeleteArticles(urls);
+        for (let i = 0; i < deletes.length; i++) {
+          if (results[i]?.success) {
+            await this.repository.removeSyncOperation(deletes[i].id);
+            result.processed++;
+          } else {
+            await this.handleOperationFailure(deletes[i], results[i]?.error || 'Batch delete failed', result);
+          }
+        }
+      } catch (error) {
+        if (error instanceof AuthenticationRequiredError) throw error;
+        for (const op of deletes) {
+          await this.handleOperationFailure(op, error instanceof Error ? error.message : 'Unknown error', result);
+        }
       }
     }
 
     return result;
+  }
+
+  private async handleOperationFailure(
+    operation: SyncOperation,
+    errorMessage: string,
+    result: SyncQueueResult
+  ): Promise<void> {
+    console.error(`Failed sync operation ${operation.id} (${operation.type} ${operation.articleUrl}):`, errorMessage);
+    result.failures++;
+    result.errors.push(`Operation ${operation.type} for ${operation.articleUrl}: ${errorMessage}`);
+
+    await this.repository.incrementSyncRetryCount(operation.id);
+
+    if (operation.retryCount >= 2) {
+      console.warn(`Removing sync operation ${operation.id} after ${operation.retryCount + 1} failed attempts`);
+      await this.repository.removeSyncOperation(operation.id);
+    }
   }
 
   private async verifySyncIntegrity(checkpoint: SyncCheckpoint): Promise<void> {

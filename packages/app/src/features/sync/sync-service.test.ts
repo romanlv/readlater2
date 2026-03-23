@@ -90,13 +90,13 @@ describe('SyncService', () => {
 
       mockRepo.getPendingSyncOperations.mockResolvedValue([pendingOperation]);
       mockRepo.getByUrl.mockResolvedValue(undefined);
-      mockEngine.saveArticle.mockResolvedValue({ success: true, articleUrl: pendingOperation.articleUrl });
+      mockEngine.saveArticles.mockResolvedValue([{ success: true, articleUrl: pendingOperation.articleUrl }]);
       mockEngine.getArticles.mockResolvedValue([remoteArticle]);
 
       const result = await service.syncNow();
 
       expect(result.success).toBe(true);
-      expect(mockEngine.saveArticle).toHaveBeenCalled();
+      expect(mockEngine.saveArticles).toHaveBeenCalled();
       expect(mockEngine.getArticles).toHaveBeenCalled();
       expect(mockRepo.bulkUpdate).toHaveBeenCalled();
       expect(service.getState().status).toBe('idle');
@@ -348,7 +348,7 @@ describe('SyncService', () => {
       const operation = createTestSyncOperation({ retryCount: 0 });
 
       mockRepo.getPendingSyncOperations.mockResolvedValue([operation]);
-      mockEngine.saveArticle.mockRejectedValue(new Error('Temporary error'));
+      mockEngine.saveArticles.mockResolvedValue([{ success: false, error: 'Temporary error', articleUrl: operation.articleUrl }]);
       mockEngine.getArticles.mockResolvedValue([]);
 
       await service.syncNow();
@@ -360,7 +360,7 @@ describe('SyncService', () => {
       const operation = createTestSyncOperation({ retryCount: 2 }); // Already failed 2 times
 
       mockRepo.getPendingSyncOperations.mockResolvedValue([operation]);
-      mockEngine.saveArticle.mockRejectedValue(new Error('Persistent error'));
+      mockEngine.saveArticles.mockResolvedValue([{ success: false, error: 'Persistent error', articleUrl: operation.articleUrl }]);
       mockEngine.getArticles.mockResolvedValue([]);
 
       await service.syncNow();
@@ -372,7 +372,7 @@ describe('SyncService', () => {
       const operation = createTestSyncOperation();
 
       mockRepo.getPendingSyncOperations.mockResolvedValue([operation]);
-      mockEngine.saveArticle.mockRejectedValue(
+      mockEngine.saveArticles.mockRejectedValue(
         new AuthenticationRequiredError('No token')
       );
 
@@ -471,42 +471,42 @@ describe('SyncService', () => {
   });
 
   describe('Sync Queue Processing', () => {
-    it('should process create operations', async () => {
+    it('should process create operations in batch', async () => {
       const operation = createTestSyncOperation({ type: 'create' });
 
       mockRepo.getPendingSyncOperations.mockResolvedValue([operation]);
-      mockEngine.saveArticle.mockResolvedValue({ success: true, articleUrl: operation.articleUrl });
+      mockEngine.saveArticles.mockResolvedValue([{ success: true, articleUrl: operation.articleUrl }]);
       mockEngine.getArticles.mockResolvedValue([]);
 
       await service.syncNow();
 
-      expect(mockEngine.saveArticle).toHaveBeenCalled();
+      expect(mockEngine.saveArticles).toHaveBeenCalled();
       expect(mockRepo.markAsSynced).toHaveBeenCalledWith(operation.articleUrl);
     });
 
-    it('should process update operations', async () => {
+    it('should process update operations in batch', async () => {
       const operation = createTestSyncOperation({ type: 'update' });
 
       mockRepo.getPendingSyncOperations.mockResolvedValue([operation]);
-      mockEngine.updateArticle.mockResolvedValue({ success: true, articleUrl: operation.articleUrl });
+      mockEngine.batchUpdateArticles.mockResolvedValue([{ success: true, articleUrl: operation.articleUrl }]);
       mockEngine.getArticles.mockResolvedValue([]);
 
       await service.syncNow();
 
-      expect(mockEngine.updateArticle).toHaveBeenCalled();
+      expect(mockEngine.batchUpdateArticles).toHaveBeenCalled();
       expect(mockRepo.markAsSynced).toHaveBeenCalledWith(operation.articleUrl);
     });
 
-    it('should process delete operations', async () => {
+    it('should process delete operations in batch', async () => {
       const operation = createTestSyncOperation({ type: 'delete' });
 
       mockRepo.getPendingSyncOperations.mockResolvedValue([operation]);
-      mockEngine.deleteArticle.mockResolvedValue({ success: true, articleUrl: operation.articleUrl });
+      mockEngine.batchDeleteArticles.mockResolvedValue([{ success: true, articleUrl: operation.articleUrl }]);
       mockEngine.getArticles.mockResolvedValue([]);
 
       await service.syncNow();
 
-      expect(mockEngine.deleteArticle).toHaveBeenCalledWith(operation.articleUrl);
+      expect(mockEngine.batchDeleteArticles).toHaveBeenCalledWith([operation.articleUrl]);
       expect(mockRepo.removeSyncOperation).toHaveBeenCalledWith(operation.id);
     });
 
@@ -517,9 +517,9 @@ describe('SyncService', () => {
       const result = await service.syncNow();
 
       expect(result.success).toBe(true);
-      expect(mockEngine.saveArticle).not.toHaveBeenCalled();
-      expect(mockEngine.updateArticle).not.toHaveBeenCalled();
-      expect(mockEngine.deleteArticle).not.toHaveBeenCalled();
+      expect(mockEngine.saveArticles).not.toHaveBeenCalled();
+      expect(mockEngine.batchUpdateArticles).not.toHaveBeenCalled();
+      expect(mockEngine.batchDeleteArticles).not.toHaveBeenCalled();
     });
   });
 });
