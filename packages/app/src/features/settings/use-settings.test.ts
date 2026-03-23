@@ -17,6 +17,8 @@ describe('useSettings', () => {
     expect(result.current.settings).toEqual({
       autoSync: true,
       openInPreview: false,
+      backendEnabled: false,
+      backendUrl: 'http://localhost:4080',
     });
   });
 
@@ -61,6 +63,8 @@ describe('useSettings', () => {
     expect(result.current.settings).toEqual({
       autoSync: true,
       openInPreview: false,
+      backendEnabled: false,
+      backendUrl: 'http://localhost:4080',
     });
   });
 
@@ -98,6 +102,8 @@ describe('useSettings', () => {
     expect(result.current.settings).toEqual({
       autoSync: true,
       openInPreview: false,
+      backendEnabled: false,
+      backendUrl: 'http://localhost:4080',
     });
   });
 });

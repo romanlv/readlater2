@@ -1,0 +1,16 @@
+STAGED=$(git diff --cached --name-only --diff-filter=d)
+
+# Workspace packages
+if echo "$STAGED" | grep -q "^packages/"; then
+  pnpm exec lint-staged
+  pnpm typecheck
+  pnpm test
+fi
+
+# Backend (standalone)
+if echo "$STAGED" | grep -q "^backend/"; then
+  cd backend
+  pnpm exec lint-staged
+  pnpm typecheck
+  pnpm test run
+fi

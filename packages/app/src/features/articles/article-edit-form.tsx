@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useMetadata } from './use-metadata';
 
 export interface ArticleFormData {
   url: string;
@@ -38,6 +40,20 @@ export function ArticleEditForm({
   const [tagsInput, setTagsInput] = useState(
     initialData.tags ? initialData.tags.join(', ') : ''
   );
+
+  // Auto-populate metadata from backend when adding a new article
+  const { metadata, isLoading: isLoadingMetadata } = useMetadata(
+    mode === 'create' ? formData.url : ''
+  );
+
+  useEffect(() => {
+    if (!metadata) return;
+    setFormData(prev => ({
+      ...prev,
+      title: prev.title || metadata.title,
+      description: prev.description || metadata.description,
+    }));
+  }, [metadata]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +96,12 @@ export function ArticleEditForm({
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="title" className="text-foreground font-medium">Title</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="title" className="text-foreground font-medium">Title</Label>
+              {isLoadingMetadata && !formData.title && (
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              )}
+            </div>
             <Input
               id="title"
               value={formData.title}
@@ -91,7 +112,12 @@ export function ArticleEditForm({
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="description" className="text-foreground font-medium">Description</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="description" className="text-foreground font-medium">Description</Label>
+              {isLoadingMetadata && !formData.description && (
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              )}
+            </div>
             <Textarea
               id="description"
               value={formData.description}

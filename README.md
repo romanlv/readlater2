@@ -1,6 +1,6 @@
 # ReadLater2
 
-A serverless, privacy-first article saving system that puts you in control of your data. Think Pocket or Instapaper, but without the backend—your articles sync via Google Sheets, eliminating hosting costs and third-party data concerns.
+A privacy-first article saving system that puts you in control of your data. Think Pocket or Instapaper, but your articles sync via Google Sheets—no third-party data concerns. An optional backend server adds features like automatic metadata extraction.
 
 ## Project Status: **Functional MVP** 🚀
 
@@ -48,12 +48,13 @@ The core system is working and deployed. Both the Chrome extension and PWA are f
 - Full article content caching for offline reading
 - Text highlighting and annotations
 - Chrome Web Store publication
+- Backend: full page content extraction, AI-powered summarization
 
 ## Why ReadLater2?
 
 **Motivation:**
 - **User-owned data:** Your articles live in your Google Sheets—you control access, backups, and retention
-- **Zero infrastructure:** No servers to maintain, no hosting bills, no vendor lock-in
+- **Minimal infrastructure:** Works with zero backend; optional server adds convenience features
 - **Privacy-first:** Data never touches third-party servers (except Google Sheets)
 - **Offline-capable:** Read and manage articles without internet connection
 - **Easy sharing:** Share your reading list by sharing your Google Sheet
@@ -79,6 +80,13 @@ The core system is working and deployed. Both the Chrome extension and PWA are f
 - CRUD operations with error handling
 - Conflict resolution (Last-Write-Wins)
 
+### 4. Backend Server (Optional)
+- **Fastify 5** with TypeScript
+- URL metadata extraction (title, description, og:image)
+- Enables auto-populated article fields in the PWA
+- Runs independently — not part of the pnpm workspace
+- See [backend/README setup](#backend-optional) below
+
 ## Quick Start
 
 ### Prerequisites
@@ -98,6 +106,20 @@ pnpm dev
 pnpm app dev        # PWA only (http://localhost:3030)
 pnpm ext dev        # Extension only (load unpacked from dist/)
 ```
+
+### Backend (Optional)
+
+The backend is a standalone project with its own dependencies, separate from the pnpm workspace.
+
+```bash
+cd backend
+pnpm install        # Separate install — not part of the workspace
+pnpm dev            # Starts on http://localhost:4080
+```
+
+Then enable it in the PWA: **Settings > Backend Server > Enable**, set URL to `http://localhost:4080`.
+
+When enabled, adding a URL in the PWA will auto-fetch title, description, and featured image from the page.
 
 ### Production Build
 
@@ -131,6 +153,7 @@ pnpm test           # Run all tests with Vitest
 ## Tech Stack
 
 **Frontend:** React 19, Tailwind CSS 4.x, shadcn/ui components, Lucide icons
+**Backend:** Fastify 5, cheerio, Pino (optional, standalone)
 **Build:** Vite 6, TypeScript 5.8, pnpm workspaces
 **State:** @tanstack/react-query, minimal Zustand
 **Storage:** Dexie.js (IndexedDB), Google Sheets API
@@ -142,29 +165,30 @@ pnpm test           # Run all tests with Vitest
 ## Project Structure
 
 ```
-packages/
-├── app/                          # PWA (React + Vite + IndexedDB)
-│   ├── src/features/articles/    # Article management
-│   │   ├── repository.ts         # Dexie operations
-│   │   ├── sync-service.ts       # Sync orchestration
-│   │   ├── google-sheets.ts      # PWA auth/sync
-│   │   ├── hooks.ts              # React Query hooks
-│   │   └── list.tsx              # UI components
-│   └── src/components/ui/        # shadcn components
+backend/                              # Optional Fastify server (standalone)
+├── src/features/metadata/            # URL metadata extraction
+├── src/lib/                          # Error handling
+└── src/utils/                        # Logging
+
+packages/                             # pnpm workspace
+├── app/                              # PWA (React + Vite + IndexedDB)
+│   ├── src/features/articles/        # Article management
+│   ├── src/features/settings/        # App preferences
+│   └── src/components/ui/            # shadcn components
 │
-├── extension/                    # Chrome Extension (Manifest V3)
-│   ├── src/background.ts         # Service worker
-│   ├── src/popup.tsx             # Extension UI
-│   └── manifest.json             # Extension config
+├── extension/                        # Chrome Extension (Manifest V3)
+│   ├── src/background.ts             # Service worker
+│   ├── src/popup.tsx                 # Extension UI
+│   └── manifest.json                 # Extension config
 │
-├── google-sheets-sync/           # Shared sync engine
-│   ├── src/auth/                 # OAuth providers
-│   ├── src/spreadsheet/          # Sheets API operations
-│   └── src/sync/                 # Sync engine
+├── google-sheets-sync/               # Shared sync engine
+│   ├── src/auth/                     # OAuth providers
+│   ├── src/spreadsheet/              # Sheets API operations
+│   └── src/sync/                     # Sync engine
 │
-└── core/                         # Shared types/utilities
-    ├── src/types/                # TypeScript definitions
-    └── src/utils/                # Shared utilities
+└── core/                             # Shared types/utilities
+    ├── src/types/                    # TypeScript definitions
+    └── src/utils/                    # Shared utilities
 ```
 
 ## Architecture Highlights
@@ -211,9 +235,10 @@ Comprehensive docs available in `docs/`:
 - Component rendering
 
 ```bash
-pnpm test           # Run all tests
+pnpm test           # Run all tests (workspace)
 pnpm app test       # PWA tests only
 pnpm ext test       # Extension tests only
+cd backend && pnpm test  # Backend tests (separate)
 ```
 
 See [docs/testing-guide.md](docs/testing-guide.md) for detailed testing guidance.

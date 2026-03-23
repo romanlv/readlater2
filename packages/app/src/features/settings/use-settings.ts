@@ -5,6 +5,10 @@ export interface AppSettings {
   autoSync: boolean;
   /** Open articles in embedded preview instead of new tab */
   openInPreview: boolean;
+  /** Enable backend server for metadata extraction */
+  backendEnabled: boolean;
+  /** Backend server URL */
+  backendUrl: string;
 }
 
 const STORAGE_KEY = 'app-settings';
@@ -12,6 +16,8 @@ const STORAGE_KEY = 'app-settings';
 const defaultSettings: AppSettings = {
   autoSync: true,
   openInPreview: false,
+  backendEnabled: false,
+  backendUrl: 'http://localhost:4080',
 };
 
 function loadSettings(): AppSettings {

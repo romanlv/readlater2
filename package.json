@@ -15,7 +15,8 @@
     "build": "pnpm build:libs && pnpm build:extension && pnpm --filter 'readlater-app' build",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test run",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,8 @@
   "description": "this is a project to build Read It Later (Pocket) replacement without server side, so users can own their data and don't have to self host backend.",
   "devDependencies": {
     "eslint": "^9.29.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "pnpm": "^9.0.0"
   },
   "main": "browser-test.js",
