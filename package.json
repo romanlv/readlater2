@@ -14,8 +14,8 @@
     "build:extension": "pnpm --filter 'readlater-extension' build:zip && cp packages/extension/readlater-extension.zip packages/app/public/",
     "build": "pnpm build:libs && pnpm build:extension && pnpm --filter 'readlater-app' build",
     "lint": "pnpm -r lint",
-    "test": "pnpm -r test run",
-    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm build:libs && pnpm -r test run",
+    "typecheck": "pnpm build:libs && pnpm -r typecheck",
     "prepare": "husky"
   },
   "keywords": [],
