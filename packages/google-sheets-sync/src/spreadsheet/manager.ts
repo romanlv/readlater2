@@ -475,7 +475,7 @@ export class GoogleSpreadsheetManager {
     this.invalidateRowsCache();
   }
 
-  private invalidateRowsCache(): void {
+  invalidateRowsCache(): void {
     if (this.cache.rowsData) {
       this.cache.rowsData = undefined;
     }

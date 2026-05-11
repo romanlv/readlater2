@@ -17,9 +17,18 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
       console.log('Saving article to Google Sheets...');
 
       const rowData = articleToSheetRow(article);
-      await this.manager.appendRow(rowData);
 
-      console.log('Successfully saved to Google Sheets');
+      // Check if article already exists (e.g., added by another device)
+      const existingRow = await this.manager.findRowByUrl(article.url);
+      if (existingRow !== null) {
+        // Upsert: update existing row instead of creating a duplicate
+        await this.manager.updateRow(existingRow, rowData);
+        console.log('Updated existing article in Google Sheets (dedup)');
+      } else {
+        await this.manager.appendRow(rowData);
+        console.log('Successfully saved to Google Sheets');
+      }
+
       return {
         success: true,
         articleUrl: article.url
@@ -82,8 +91,20 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
         }
       }
 
+      // Deduplicate by URL — if there are duplicate rows for the same URL,
+      // keep the last occurrence (most recently appended).
+      const deduped = new Map<string, ArticleData>();
+      for (const article of validArticles) {
+        deduped.set(article.url, article);
+      }
+      const uniqueArticles = Array.from(deduped.values());
+
+      if (uniqueArticles.length < validArticles.length) {
+        console.warn(`Deduplicated ${validArticles.length - uniqueArticles.length} duplicate URLs`);
+      }
+
       // Log summary of what we found
-      console.log(`Successfully loaded ${validArticles.length} valid articles from Google Sheets`);
+      console.log(`Successfully loaded ${uniqueArticles.length} valid articles from Google Sheets`);
       if (invalidRows.length > 0) {
         console.warn(`Skipped ${invalidRows.length} invalid rows`);
 
@@ -93,11 +114,10 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
         if (totalRows > 0 && invalidRatio > 0.25) {
           console.error(`High invalid row ratio detected: ${invalidRows.length}/${totalRows} (${Math.round(invalidRatio * 100)}%)`);
           console.error('This might indicate spreadsheet corruption or format changes');
-          // Still return valid articles, but log the issue for investigation
         }
       }
 
-      return validArticles;
+      return uniqueArticles;
     } catch (error) {
       console.error('Error loading articles:', error);
 
@@ -167,11 +187,42 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
     try {
       console.log(`Batch saving ${articles.length} articles...`);
 
-      // Convert all articles to row data
-      const valuesList = articles.map(article => articleToSheetRow(article));
+      // Fetch current rows to check which URLs already exist
+      const existingRows = await this.manager.getAllRows();
+      const urlToRowMap = new Map<string, number>();
+      for (let i = 0; i < existingRows.length; i++) {
+        const url = existingRows[i][0];
+        if (url) {
+          urlToRowMap.set(url, i + 2); // 1-indexed + header offset
+        }
+      }
 
-      // Use batch operation for better performance
-      await this.manager.batchAppendRows(valuesList);
+      // Separate into updates (existing URLs) and appends (new URLs)
+      const toAppend: string[][] = [];
+      const toUpdate: Array<{ rowNumber: number; values: string[] }> = [];
+
+      for (const article of articles) {
+        const rowData = articleToSheetRow(article);
+        const existingRow = urlToRowMap.get(article.url);
+
+        if (existingRow !== undefined) {
+          toUpdate.push({ rowNumber: existingRow, values: rowData });
+        } else {
+          toAppend.push(rowData);
+        }
+      }
+
+      // Batch update existing rows
+      if (toUpdate.length > 0) {
+        await this.manager.batchUpdateRows(toUpdate);
+        console.log(`Updated ${toUpdate.length} existing articles (dedup)`);
+      }
+
+      // Batch append genuinely new rows
+      if (toAppend.length > 0) {
+        await this.manager.batchAppendRows(toAppend);
+        console.log(`Appended ${toAppend.length} new articles`);
+      }
 
       const results = articles.map(article => ({
         success: true,
@@ -182,7 +233,6 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
       return results;
     } catch (error) {
       console.error('Error in batch save:', error);
-      // Return failed results for all articles
       return articles.map(article => ({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -317,23 +367,25 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
     try {
       console.log(`Batch updating ${updates.length} articles...`);
 
-      // Get all rows once to find row numbers for each URL
+      // Fetch rows to read current article data for merging
       const rows = await this.manager.getAllRows();
-      const urlToRowMap = new Map<string, number>();
+      const urlToDataMap = new Map<string, { rowIndex: number; row: string[] }>();
 
       for (let i = 0; i < rows.length; i++) {
         const url = rows[i][0];
         if (url) {
-          urlToRowMap.set(url, i + 2); // Convert to 1-indexed row number
+          // Keep the last occurrence if duplicates exist
+          urlToDataMap.set(url, { rowIndex: i, row: rows[i] });
         }
       }
 
-      const rowUpdates: Array<{ rowNumber: number; values: string[] }> = [];
+      // Build merged row data keyed by URL (not by row number yet)
+      const pendingUpdates: Array<{ url: string; values: string[] }> = [];
       const results: SyncResult[] = [];
 
       for (const { url, updates: articleUpdates } of updates) {
-        const rowNumber = urlToRowMap.get(url);
-        if (!rowNumber) {
+        const existing = urlToDataMap.get(url);
+        if (!existing) {
           results.push({
             success: false,
             error: 'Article not found in spreadsheet',
@@ -342,34 +394,51 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
           continue;
         }
 
-        // Get current article data and merge with updates
-        const currentRow = rows[rowNumber - 2]; // Convert back to 0-indexed array
-        const currentArticle = sheetRowToArticle(currentRow);
-
+        const currentArticle = sheetRowToArticle(existing.row);
         const updatedArticle: ArticleData = {
           ...currentArticle,
           ...articleUpdates,
           url // Ensure URL doesn't get overwritten
         };
 
-        const rowData = articleToSheetRow(updatedArticle);
-        rowUpdates.push({ rowNumber, values: rowData });
-        results.push({
-          success: true,
-          articleUrl: url
-        });
+        pendingUpdates.push({ url, values: articleToSheetRow(updatedArticle) });
+        results.push({ success: true, articleUrl: url });
       }
 
-      // Perform batch update if we have any valid updates
-      if (rowUpdates.length > 0) {
-        await this.manager.batchUpdateRows(rowUpdates);
+      // Re-fetch rows right before writing to get fresh row numbers,
+      // avoiding stale indices from concurrent modifications by other devices
+      if (pendingUpdates.length > 0) {
+        this.manager.invalidateRowsCache();
+        const freshRows = await this.manager.getAllRows();
+        const freshUrlToRow = new Map<string, number>();
+        for (let i = 0; i < freshRows.length; i++) {
+          const url = freshRows[i][0];
+          if (url) freshUrlToRow.set(url, i + 2);
+        }
+
+        const rowUpdates: Array<{ rowNumber: number; values: string[] }> = [];
+        for (const { url, values } of pendingUpdates) {
+          const rowNumber = freshUrlToRow.get(url);
+          if (rowNumber) {
+            rowUpdates.push({ rowNumber, values });
+          } else {
+            // Article was deleted between read and write — mark as failure
+            const resultIdx = results.findIndex(r => r.articleUrl === url && r.success);
+            if (resultIdx !== -1) {
+              results[resultIdx] = { success: false, error: 'Article disappeared during update', articleUrl: url };
+            }
+          }
+        }
+
+        if (rowUpdates.length > 0) {
+          await this.manager.batchUpdateRows(rowUpdates);
+        }
       }
 
-      console.log(`Batch update completed: ${rowUpdates.length}/${updates.length} successful`);
+      console.log(`Batch update completed: ${pendingUpdates.length}/${updates.length} successful`);
       return results;
     } catch (error) {
       console.error('Error in batch update:', error);
-      // Return failed results for all articles
       return updates.map(({ url }) => ({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -384,39 +453,29 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
     try {
       console.log(`Batch deleting ${urls.length} articles...`);
 
-      // Get all rows once to find row numbers for each URL
-      const rows = await this.manager.getAllRows();
-      const urlToRowMap = new Map<string, number>();
-
-      for (let i = 0; i < rows.length; i++) {
-        const url = rows[i][0];
-        if (url) {
-          urlToRowMap.set(url, i + 2); // Convert to 1-indexed row number
-        }
+      // Fetch fresh row numbers right before deleting to avoid stale indices
+      const freshRows = await this.manager.getAllRows();
+      const freshUrlToRow = new Map<string, number>();
+      for (let i = 0; i < freshRows.length; i++) {
+        const url = freshRows[i][0];
+        if (url) freshUrlToRow.set(url, i + 2);
       }
 
       const rowsToDelete: number[] = [];
       const results: SyncResult[] = [];
 
       for (const url of urls) {
-        const rowNumber = urlToRowMap.get(url);
+        const rowNumber = freshUrlToRow.get(url);
         if (!rowNumber) {
           // Consider it success if already not present
-          results.push({
-            success: true,
-            articleUrl: url
-          });
+          results.push({ success: true, articleUrl: url });
           continue;
         }
 
         rowsToDelete.push(rowNumber);
-        results.push({
-          success: true,
-          articleUrl: url
-        });
+        results.push({ success: true, articleUrl: url });
       }
 
-      // Perform batch delete if we have any rows to delete
       if (rowsToDelete.length > 0) {
         await this.manager.batchDeleteRows(rowsToDelete);
       }
@@ -425,7 +484,6 @@ export class GoogleSheetsSyncEngine implements SyncEngine {
       return results;
     } catch (error) {
       console.error('Error in batch delete:', error);
-      // Return failed results for all articles
       return urls.map(url => ({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
