@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+  <channel>
+    <title>Parenting: Connection, Boundaries &amp; Screens</title>
+    <link>https://chatgpt.com/</link>
+    <description>A small curated listening queue about parent-child connection, boundaries, autonomy, boredom, and screen time.</description>
+    <language>en-ca</language>
+    <lastBuildDate>Sun, 30 Aug 2026 12:13:22 +0000</lastBuildDate>
+    <generator>ChatGPT curated RSS</generator>
+    <itunes:author>Curated listening queue</itunes:author>
+    <itunes:explicit>false</itunes:explicit>
+    <itunes:category text="Kids &amp; Family" />
+    <item>
+      <title>Protocols for Excellent Parenting &amp; Improving Relationships of All Kinds | Dr. Becky Kennedy — Huberman Lab</title>
+      <link>https://www.hubermanlab.com/episode/dr-becky-kennedy-protocols-for-excellent-parenting-improving-relationships-of-all-kinds</link>
+      <guid isPermaLink="false">parenting-queue-huberman-becky-2024-02-26</guid>
+      <pubDate>Mon, 26 Feb 2024 09:00:00 +0000</pubDate>
+      <description>Start here. Long-form discussion of boundaries, empathy, repair, co-parenting differences, frustration tolerance, screens, and asking kids questions without pushing them away.</description>
+      <enclosure url="https://traffic.megaphone.fm/SCIM7905596498.mp3?updated=1747806015" length="0" type="audio/mpeg" />
+      <itunes:duration>2:49:38</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:author>Huberman Lab</itunes:author>
+    </item>
+    <item>
+      <title>My Tween Is Pulling Away. Is That Normal? — Good Inside with Dr. Becky</title>
+      <link>https://www.goodinside.com/podcast/6873/my-tween-is-pulling-away-is-that-normal/</link>
+      <guid isPermaLink="false">parenting-queue-goodinside-tween-2024-03-19</guid>
+      <pubDate>Tue, 19 Mar 2024 05:00:00 +0000</pubDate>
+      <description>Especially relevant to building connection when a son shares little about his life and prefers games and friends.</description>
+      <enclosure url="https://prfx.byspotify.com/e/pscrb.fm/rss/p/afp-940002-injected.calisto.simplecastaudio.com/0cb2e4b1-5eda-4ee8-bb0e-6f61f20ba777/episodes/63a13838-3de8-495a-ad9a-3b29dbf7b196/audio/128/default.mp3?aid=rss_feed&amp;awCollectionId=0cb2e4b1-5eda-4ee8-bb0e-6f61f20ba777&amp;awEpisodeId=63a13838-3de8-495a-ad9a-3b29dbf7b196&amp;feed=Y5N0xWWZ" length="0" type="audio/mpeg" />
+      <itunes:duration>30:37</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:author>Good Inside with Dr. Becky</itunes:author>
+    </item>
+    <item>
+      <title>Connect to the Good Kid Underneath the Bad Behavior — Good Inside with Dr. Becky</title>
+      <link>https://www.goodinside.com/podcast/10633/connect-to-the-good-kid-underneath-the-bad-behavior/</link>
+      <guid isPermaLink="false">parenting-queue-goodinside-connection-2025-02-04</guid>
+      <pubDate>Tue, 04 Feb 2025 06:00:00 +0000</pubDate>
+      <description>Connection as something to build independently of correcting behavior.</description>
+      <enclosure url="https://prfx.byspotify.com/e/locator.simplecastcdn.com/0cb2e4b1-5eda-4ee8-bb0e-6f61f20ba777/a2a02e25-f101-4309-bb9b-cb07e10ed27c.mp3?aid=rss_feed&amp;feed=Y5N0xWWZ" length="0" type="audio/mpeg" />
+      <itunes:duration>28:35</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:author>Good Inside with Dr. Becky</itunes:author>
+    </item>
+    <item>
+      <title>What’s Really Going On: Why Screens Never Satisfy Kids — Good Inside with Dr. Becky</title>
+      <link>https://www.goodinside.com/podcast/16234/whats-really-going-on-why-screens-never-satisfy-kids/</link>
+      <guid isPermaLink="false">parenting-queue-goodinside-screens-2026-04-07</guid>
+      <pubDate>Tue, 07 Apr 2026 05:30:00 +0000</pubDate>
+      <description>Screen time, wanting vs. satisfaction, regulation, limits, and what helps kids feel more done.</description>
+      <enclosure url="https://prfx.byspotify.com/e/pscrb.fm/rss/p/claritaspod.com/measure/afp-940002-injected.calisto.simplecastaudio.com/0cb2e4b1-5eda-4ee8-bb0e-6f61f20ba777/episodes/5cf43596-0a9f-4fb2-9d84-2fc211a11254/audio/128/default.mp3?aid=rss_feed&amp;awCollectionId=0cb2e4b1-5eda-4ee8-bb0e-6f61f20ba777&amp;awEpisodeId=5cf43596-0a9f-4fb2-9d84-2fc211a11254&amp;feed=Y5N0xWWZ" length="0" type="audio/mpeg" />
+      <itunes:duration>29:45</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:author>Good Inside with Dr. Becky</itunes:author>
+    </item>
+  </channel>
+</rss>
